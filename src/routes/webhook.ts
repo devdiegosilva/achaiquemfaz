@@ -3,6 +3,7 @@ import { classificarDemanda } from "../services/ai";
 import { buscarFornecedoresAtivos, registrarDemanda, registrarNotificacoes } from "../services/supabase";
 import { enviarMensagemWhatsapp } from "../services/whatsapp";
 import { consumirPendente, salvarPendente } from "../services/conversationState";
+import { montarMensagemFornecedor } from "../services/mensagens";
 import type { MensagemRecebida } from "../types";
 
 export const webhookRouter = Router();
@@ -68,7 +69,7 @@ webhookRouter.post("/whatsapp", async (req, res) => {
       fornecedores.map((fornecedor) =>
         enviarMensagemWhatsapp(
           fornecedor.whatsapp,
-          `${nomeDemandante} está à procura dos seus serviços${bairroTexto}. Entre em contato pelo WhatsApp ${mensagem.telefone}.`
+          montarMensagemFornecedor(nomeDemandante, bairroTexto, mensagem.telefone)
         )
       )
     );

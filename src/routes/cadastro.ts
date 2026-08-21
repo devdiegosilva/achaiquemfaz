@@ -74,6 +74,17 @@ function paginaFormulario(erro?: string): string {
       <label for="cidade">Cidade</label>
       <input type="text" id="cidade" name="cidade" value="João Pessoa" required />
 
+      <p class="subtitle" style="margin-top: 24px;">Dados de cobrança (necessários para o pagamento por cartão)</p>
+
+      <label for="cep">CEP</label>
+      <input type="text" id="cep" name="cep" placeholder="58000000" required />
+
+      <label for="endereco">Endereço (rua)</label>
+      <input type="text" id="endereco" name="endereco" required />
+
+      <label for="numero">Número</label>
+      <input type="text" id="numero" name="numero" required />
+
       <button type="submit">Continuar para pagamento</button>
     </form>
     `
@@ -85,9 +96,9 @@ cadastroRouter.get("/", (_req, res) => {
 });
 
 cadastroRouter.post("/", async (req, res) => {
-  const { nome, cpfCnpj, email, whatsapp, categoria, bairro, cidade } = req.body ?? {};
+  const { nome, cpfCnpj, email, whatsapp, categoria, bairro, cidade, cep, endereco, numero } = req.body ?? {};
 
-  if (!nome || !cpfCnpj || !email || !whatsapp || !categoria || !bairro || !cidade) {
+  if (!nome || !cpfCnpj || !email || !whatsapp || !categoria || !bairro || !cidade || !cep || !endereco || !numero) {
     return res.status(400).send(paginaFormulario("Preencha todos os campos."));
   }
 
@@ -97,7 +108,17 @@ cadastroRouter.post("/", async (req, res) => {
 
   try {
     const fornecedorId = await criarFornecedorPendente({ nome, categoria, bairro, cidade, whatsapp, email, cpfCnpj });
-    const { link, checkoutId } = await criarCheckoutAssinatura({ nome, cpfCnpj, email, fornecedorId });
+    const { link, checkoutId } = await criarCheckoutAssinatura({
+      nome,
+      cpfCnpj,
+      email,
+      whatsapp,
+      bairro,
+      endereco,
+      numero,
+      cep,
+      fornecedorId,
+    });
     await salvarAsaasCheckoutId(fornecedorId, checkoutId);
     return res.redirect(303, link);
   } catch (error) {

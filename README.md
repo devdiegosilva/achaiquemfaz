@@ -2,6 +2,21 @@
 
 Agente que conecta demandantes e prestadores de serviço via WhatsApp, começando em João Pessoa/PB.
 
+## Status atual (atualizado em 2026-08-16)
+
+**No ar e testado ponta a ponta:**
+- WhatsApp conectado (Evolution API, hospedada na Railway) → backend (Railway) → classificação da demanda via Claude → busca de fornecedor no Supabase → notificação ao fornecedor e confirmação ao demandante. Teste real feito com sucesso em 2026-08-16.
+
+**Construído, aguardando configuração final do usuário (não testado ainda):**
+- Landing page de cadastro de fornecedor em `/cadastro` com checkout de assinatura recorrente (Asaas, Pix + cartão de crédito, R$ 97,90/mês).
+- Webhook de pagamento (`/webhook/pagamento`) que ativa o fornecedor quando o pagamento é confirmado e desativa automaticamente se uma cobrança vencer sem pagamento.
+- Status `trial`: fornecedores cadastrados manualmente (indicação) recebem demandas de graça por 30 dias, com uma chamada para conhecer os planos na mensagem que recebem.
+- Pendências para ativar isso em produção: rodar migração SQL no Supabase, configurar 5 variáveis de ambiente novas na Railway, e configurar o webhook no painel do Asaas.
+
+**Decisão de gateway de pagamento:** usando **Asaas** agora (conta pessoa física, CPF) porque a Pagar.me/Stone exige CNPJ no cadastro principal. Plano é migrar para **Pagar.me** assim que o usuário abrir CNPJ — a integração já foi pesquisada e documentada para quando isso acontecer.
+
+**Ainda não construído:** painel de gestão para o fornecedor, e a landing page ainda não tem domínio próprio (usa a URL do backend na Railway).
+
 ## Fluxo
 
 1. Demandante manda mensagem no WhatsApp.

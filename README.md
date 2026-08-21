@@ -8,7 +8,7 @@ Agente que conecta demandantes e prestadores de serviço via WhatsApp, começand
 - WhatsApp conectado (Evolution API, hospedada na Railway) → backend (Railway) → classificação da demanda via Claude → busca de fornecedor no Supabase → notificação ao fornecedor e confirmação ao demandante. Teste real feito com sucesso em 2026-08-16.
 
 **Construído, aguardando configuração final do usuário (não testado ainda):**
-- Landing page de cadastro de fornecedor em `/cadastro` com checkout de assinatura recorrente (Asaas, Pix + cartão de crédito, R$ 97,90/mês).
+- Landing page de cadastro de fornecedor em `/cadastro` com checkout de assinatura recorrente (Asaas, somente cartão de crédito — Pix não é permitido pela Asaas em cobranças recorrentes, R$ 97,90/mês).
 - Webhook de pagamento (`/webhook/pagamento`) que ativa o fornecedor quando o pagamento é confirmado e desativa automaticamente se uma cobrança vencer sem pagamento.
 - Status `trial`: fornecedores cadastrados manualmente (indicação) recebem demandas de graça por 30 dias, com uma chamada para conhecer os planos na mensagem que recebem.
 - Pendências para ativar isso em produção: rodar migração SQL no Supabase, configurar 5 variáveis de ambiente novas na Railway, e configurar o webhook no painel do Asaas.

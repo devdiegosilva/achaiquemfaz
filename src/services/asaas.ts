@@ -19,9 +19,10 @@ export async function criarCheckoutAssinatura(params: {
   fornecedorId: string;
 }): Promise<{ link: string; checkoutId: string }> {
   const { data } = await client.post("/checkouts", {
-    billingTypes: ["PIX", "CREDIT_CARD"],
+    // Asaas só permite cartão de crédito para checkouts de assinatura (chargeTypes RECURRENT);
+    // Pix exige chargeTypes DETACHED (cobrança avulsa), então fica de fora por enquanto.
+    billingTypes: ["CREDIT_CARD"],
     chargeTypes: ["RECURRENT"],
-    minutesToExpire: 4320,
     externalReference: params.fornecedorId,
     callback: {
       successUrl: `${env.backendPublicUrl}/cadastro/sucesso`,

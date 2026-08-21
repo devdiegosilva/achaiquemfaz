@@ -53,7 +53,7 @@ export async function criarCheckoutAssinatura(params: {
       name: params.nome,
       cpfCnpj: somenteDigitos(params.cpfCnpj),
       email: params.email,
-      phoneNumber: telefoneParaAsaas(params.whatsapp),
+      phone: telefoneParaAsaas(params.whatsapp),
       address: params.endereco,
       addressNumber: somenteDigitos(params.numero) || params.numero,
       province: params.bairro,

@@ -6,11 +6,13 @@ Agente que conecta demandantes e prestadores de serviço via WhatsApp, começand
 
 1. Demandante manda mensagem no WhatsApp.
 2. IA (Claude) identifica a categoria do serviço; se ambíguo, faz uma pergunta curta de esclarecimento.
-3. Sistema busca fornecedores ativos daquela categoria no Supabase.
+3. Sistema busca fornecedores disponíveis daquela categoria no Supabase (assinantes `ativo` e cadastros manuais em `trial`, estes últimos válidos por 30 dias).
 4. Envia a demanda (nome, bairro, contato do demandante) para os fornecedores compatíveis.
 5. Confirma ao demandante quais empresas foram avisadas.
 
 Cadastro e ativação de fornecedores acontecem em `/cadastro` (formulário + checkout de assinatura via Asaas), com webhook de pagamento confirmando o registro na tabela `fornecedores`.
+
+**Status do fornecedor**: `inativo` (cadastrado, aguardando pagamento) → `ativo` (assinatura paga, automático via webhook `PAYMENT_CONFIRMED`) → volta a `inativo` se a assinatura vencer sem pagamento (webhook `PAYMENT_OVERDUE`). Existe também `trial`: fornecedores inseridos manualmente no Supabase (via indicação, sem passar pelo `/cadastro`) recebem demandas de graça por 30 dias a partir da data do cadastro (`created_at`) — a mensagem que eles recebem inclui um convite para conhecer os planos. Passados os 30 dias, o fornecedor para de aparecer nas buscas automaticamente (sem precisar de nenhuma rotina/job — é calculado na hora da consulta).
 
 ## Stack
 
@@ -45,7 +47,7 @@ db/schema.sql             # schema das tabelas (fornecedores, demandas, demandas
 1. Copie `.env.example` para `.env` e preencha as chaves (Supabase, Anthropic, Evolution API, Asaas).
 2. Crie um projeto no Supabase e rode o `db/schema.sql` no SQL editor.
 3. Suba uma instância da Evolution API (Docker) e configure o webhook dela para apontar para `POST /webhook/whatsapp` deste backend.
-4. Configure um webhook no Asaas apontando para `POST /webhook/pagamento`, evento `PAYMENT_CONFIRMED`, com o mesmo token em `ASAAS_WEBHOOK_TOKEN`.
+4. Configure um webhook no Asaas apontando para `POST /webhook/pagamento`, eventos `PAYMENT_CONFIRMED` (ativa o fornecedor) e `PAYMENT_OVERDUE` (desativa o fornecedor quando a assinatura vence sem pagamento), com o mesmo token em `ASAAS_WEBHOOK_TOKEN`.
 5. Instale as dependências e rode:
 
 ```bash

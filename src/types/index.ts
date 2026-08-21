@@ -26,7 +26,7 @@ export interface Fornecedor {
   bairro: string;
   cidade: string;
   whatsapp: string;
-  status: "ativo" | "inativo";
+  status: "ativo" | "inativo" | "trial";
 }
 
 export interface MensagemRecebida {

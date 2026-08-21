@@ -4,12 +4,18 @@ import type { Fornecedor } from "../types";
 
 export const supabase = createClient(env.supabaseUrl, env.supabaseServiceRoleKey);
 
-export async function buscarFornecedoresAtivos(categoria: string, bairro?: string): Promise<Fornecedor[]> {
+const TRIAL_DIAS = 30;
+
+// Retorna fornecedores "ativo" (assinantes pagos) e "trial" (cadastrados manualmente,
+// recebem demandas de graça pelos primeiros TRIAL_DIAS dias a partir do cadastro).
+export async function buscarFornecedoresDisponiveis(categoria: string, bairro?: string): Promise<Fornecedor[]> {
+  const trialValidoDesde = new Date(Date.now() - TRIAL_DIAS * 24 * 60 * 60 * 1000).toISOString();
+
   let query = supabase
     .from("fornecedores")
     .select("*")
     .eq("categoria", categoria)
-    .eq("status", "ativo");
+    .or(`status.eq.ativo,and(status.eq.trial,created_at.gte.${trialValidoDesde})`);
 
   if (bairro) {
     query = query.ilike("bairro", bairro);
@@ -99,6 +105,18 @@ export async function ativarFornecedorPorAsaasCustomerId(asaasCustomerId: string
   const { data, error } = await supabase
     .from("fornecedores")
     .update({ status: "ativo" })
+    .eq("asaas_customer_id", asaasCustomerId)
+    .select("id")
+    .maybeSingle();
+  if (error) throw error;
+  return data !== null;
+}
+
+// Chamado quando o Asaas avisa que uma cobrança da assinatura venceu sem pagamento.
+export async function desativarFornecedorPorAsaasCustomerId(asaasCustomerId: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("fornecedores")
+    .update({ status: "inativo" })
     .eq("asaas_customer_id", asaasCustomerId)
     .select("id")
     .maybeSingle();

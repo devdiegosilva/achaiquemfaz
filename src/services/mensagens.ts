@@ -1,3 +1,5 @@
+import { env } from "../config/env";
+
 type TemplateFornecedor = (nomeDemandante: string, bairroTexto: string, telefoneDemandante: string) => string;
 
 const TEMPLATES_FORNECEDOR: TemplateFornecedor[] = [
@@ -13,7 +15,16 @@ const TEMPLATES_FORNECEDOR: TemplateFornecedor[] = [
     `Aqui é a Ache Fornecedores! Temos um novo pedido pra você: ${nome} está procurando seus serviços${bairro}. Entre em contato pelo WhatsApp ${telefone}.`,
 ];
 
-export function montarMensagemFornecedor(nomeDemandante: string, bairroTexto: string, telefoneDemandante: string): string {
+export function montarMensagemFornecedor(
+  nomeDemandante: string,
+  bairroTexto: string,
+  telefoneDemandante: string,
+  isTrial: boolean
+): string {
   const template = TEMPLATES_FORNECEDOR[Math.floor(Math.random() * TEMPLATES_FORNECEDOR.length)];
-  return template(nomeDemandante, bairroTexto, telefoneDemandante);
+  const mensagem = template(nomeDemandante, bairroTexto, telefoneDemandante);
+
+  if (!isTrial) return mensagem;
+
+  return `${mensagem}\n\nVocê recebeu esta demanda da Ache Fornecedores. Para receber mais indicações como esta, acesse ${env.backendPublicUrl}/cadastro e confira nossos planos disponíveis.`;
 }

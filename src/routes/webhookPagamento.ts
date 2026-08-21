@@ -1,6 +1,10 @@
 import { Router } from "express";
 import { env } from "../config/env";
-import { ativarFornecedorPorId, ativarFornecedorPorAsaasCustomerId } from "../services/supabase";
+import {
+  ativarFornecedorPorId,
+  ativarFornecedorPorAsaasCustomerId,
+  desativarFornecedorPorAsaasCustomerId,
+} from "../services/supabase";
 
 export const webhookPagamentoRouter = Router();
 
@@ -26,6 +30,13 @@ webhookPagamentoRouter.post("/pagamento", async (req, res) => {
       }
       if (!ativado) {
         console.error("Webhook de pagamento confirmado sem fornecedor correspondente:", { fornecedorId, asaasCustomerId });
+      }
+    }
+
+    if (event === "PAYMENT_OVERDUE" && payment?.customer) {
+      const desativado = await desativarFornecedorPorAsaasCustomerId(payment.customer);
+      if (!desativado) {
+        console.error("Webhook de cobrança vencida sem fornecedor correspondente:", { asaasCustomerId: payment.customer });
       }
     }
 

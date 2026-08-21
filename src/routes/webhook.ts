@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { classificarDemanda } from "../services/ai";
-import { buscarFornecedoresAtivos, registrarDemanda, registrarNotificacoes } from "../services/supabase";
+import { buscarFornecedoresDisponiveis, registrarDemanda, registrarNotificacoes } from "../services/supabase";
 import { enviarMensagemWhatsapp } from "../services/whatsapp";
 import { consumirPendente, salvarPendente } from "../services/conversationState";
 import { montarMensagemFornecedor } from "../services/mensagens";
@@ -44,7 +44,7 @@ webhookRouter.post("/whatsapp", async (req, res) => {
       return res.sendStatus(200);
     }
 
-    const fornecedores = await buscarFornecedoresAtivos(classificacao.categoria, classificacao.bairro ?? undefined);
+    const fornecedores = await buscarFornecedoresDisponiveis(classificacao.categoria, classificacao.bairro ?? undefined);
 
     if (fornecedores.length === 0) {
       await enviarMensagemWhatsapp(
@@ -69,7 +69,7 @@ webhookRouter.post("/whatsapp", async (req, res) => {
       fornecedores.map((fornecedor) =>
         enviarMensagemWhatsapp(
           fornecedor.whatsapp,
-          montarMensagemFornecedor(nomeDemandante, bairroTexto, mensagem.telefone)
+          montarMensagemFornecedor(nomeDemandante, bairroTexto, mensagem.telefone, fornecedor.status === "trial")
         )
       )
     );

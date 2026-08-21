@@ -9,7 +9,7 @@ create table if not exists fornecedores (
   whatsapp text not null,
   email text,
   cpf_cnpj text,
-  status text not null default 'inativo' check (status in ('ativo', 'inativo')),
+  status text not null default 'inativo' check (status in ('ativo', 'inativo', 'trial')),
   asaas_customer_id text,
   asaas_checkout_id text,
   created_at timestamptz not null default now()

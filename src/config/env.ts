@@ -16,4 +16,9 @@ export const env = {
   evolutionApiUrl: required("EVOLUTION_API_URL"),
   evolutionApiKey: required("EVOLUTION_API_KEY"),
   evolutionInstanceName: required("EVOLUTION_INSTANCE_NAME"),
+  backendPublicUrl: required("BACKEND_PUBLIC_URL"),
+  asaasApiUrl: process.env.ASAAS_API_URL ?? "https://api-sandbox.asaas.com/v3",
+  asaasApiKey: required("ASAAS_API_KEY"),
+  asaasWebhookToken: required("ASAAS_WEBHOOK_TOKEN"),
+  assinaturaValorMensal: Number(process.env.ASSINATURA_VALOR_MENSAL ?? 97.9),
 };

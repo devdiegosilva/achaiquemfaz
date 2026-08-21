@@ -7,9 +7,11 @@ create table if not exists fornecedores (
   bairro text not null,
   cidade text not null default 'João Pessoa',
   whatsapp text not null,
+  email text,
+  cpf_cnpj text,
   status text not null default 'inativo' check (status in ('ativo', 'inativo')),
-  stripe_customer_id text,
-  stripe_subscription_id text,
+  asaas_customer_id text,
+  asaas_checkout_id text,
   created_at timestamptz not null default now()
 );
 

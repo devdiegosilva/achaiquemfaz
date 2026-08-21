@@ -50,3 +50,58 @@ export async function registrarNotificacoes(demandaId: string, fornecedorIds: st
   );
   if (error) throw error;
 }
+
+export async function criarFornecedorPendente(params: {
+  nome: string;
+  categoria: string;
+  bairro: string;
+  cidade: string;
+  whatsapp: string;
+  email: string;
+  cpfCnpj: string;
+}): Promise<string> {
+  const { data, error } = await supabase
+    .from("fornecedores")
+    .insert({
+      nome: params.nome,
+      categoria: params.categoria,
+      bairro: params.bairro,
+      cidade: params.cidade,
+      whatsapp: params.whatsapp,
+      email: params.email,
+      cpf_cnpj: params.cpfCnpj,
+      status: "inativo",
+    })
+    .select("id")
+    .single();
+
+  if (error) throw error;
+  return data.id as string;
+}
+
+export async function salvarAsaasCheckoutId(fornecedorId: string, checkoutId: string): Promise<void> {
+  const { error } = await supabase.from("fornecedores").update({ asaas_checkout_id: checkoutId }).eq("id", fornecedorId);
+  if (error) throw error;
+}
+
+export async function ativarFornecedorPorId(fornecedorId: string, asaasCustomerId: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("fornecedores")
+    .update({ status: "ativo", asaas_customer_id: asaasCustomerId })
+    .eq("id", fornecedorId)
+    .select("id")
+    .maybeSingle();
+  if (error) throw error;
+  return data !== null;
+}
+
+export async function ativarFornecedorPorAsaasCustomerId(asaasCustomerId: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("fornecedores")
+    .update({ status: "ativo" })
+    .eq("asaas_customer_id", asaasCustomerId)
+    .select("id")
+    .maybeSingle();
+  if (error) throw error;
+  return data !== null;
+}

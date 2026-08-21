@@ -1,4 +1,5 @@
 import { Router } from "express";
+import axios from "axios";
 import { criarCheckoutAssinatura } from "../services/asaas";
 import { criarFornecedorPendente, salvarAsaasCheckoutId } from "../services/supabase";
 import { CATEGORIAS, type Categoria } from "../types";
@@ -100,7 +101,11 @@ cadastroRouter.post("/", async (req, res) => {
     await salvarAsaasCheckoutId(fornecedorId, checkoutId);
     return res.redirect(303, link);
   } catch (error) {
-    console.error("Erro ao criar cadastro/checkout:", error);
+    if (axios.isAxiosError(error)) {
+      console.error("Erro ao criar cadastro/checkout (resposta do Asaas):", JSON.stringify(error.response?.data));
+    } else {
+      console.error("Erro ao criar cadastro/checkout:", error);
+    }
     return res.status(500).send(paginaFormulario("Não foi possível continuar o cadastro agora. Tente novamente em instantes."));
   }
 });

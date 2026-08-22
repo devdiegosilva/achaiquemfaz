@@ -57,13 +57,16 @@ function paginaFormulario(erro?: string): string {
       <input type="text" id="nome" name="nome" required />
 
       <label for="cpfCnpj">CPF ou CNPJ</label>
-      <input type="text" id="cpfCnpj" name="cpfCnpj" required />
+      <input type="text" id="cpfCnpj" name="cpfCnpj" inputmode="numeric" placeholder="000.000.000-00" required />
 
       <label for="email">E-mail</label>
       <input type="email" id="email" name="email" required />
 
-      <label for="whatsapp">WhatsApp (com DDD, só números)</label>
-      <input type="text" id="whatsapp" name="whatsapp" placeholder="5583999999999" required />
+      <label for="whatsapp">WhatsApp</label>
+      <div style="display: flex; gap: 8px;">
+        <span style="padding: 10px; border: 1px solid #333; border-radius: 6px; background: #1a1d24; color: #9aa0a6;">+55</span>
+        <input type="tel" id="whatsapp" name="whatsapp" inputmode="numeric" placeholder="(83) 99999-9999" required style="flex: 1;" />
+      </div>
 
       <label for="categoria">Categoria de serviço</label>
       <select id="categoria" name="categoria" required>${opcoes}</select>
@@ -77,16 +80,53 @@ function paginaFormulario(erro?: string): string {
       <p class="subtitle" style="margin-top: 24px;">Dados de cobrança (necessários para o pagamento por cartão)</p>
 
       <label for="cep">CEP</label>
-      <input type="text" id="cep" name="cep" placeholder="58000000" required />
+      <input type="text" id="cep" name="cep" inputmode="numeric" placeholder="00000-000" required />
 
       <label for="endereco">Endereço (rua)</label>
       <input type="text" id="endereco" name="endereco" required />
 
       <label for="numero">Número</label>
-      <input type="text" id="numero" name="numero" required />
+      <input type="text" id="numero" name="numero" inputmode="numeric" required />
 
       <button type="submit">Continuar para pagamento</button>
     </form>
+    <script>
+      function apenasDigitos(v) { return v.replace(/\\D/g, ""); }
+
+      document.getElementById("cpfCnpj").addEventListener("input", function () {
+        var v = apenasDigitos(this.value).slice(0, 14);
+        if (v.length <= 11) {
+          v = v.replace(/(\\d{3})(\\d)/, "$1.$2").replace(/(\\d{3})(\\d)/, "$1.$2").replace(/(\\d{3})(\\d{1,2})$/, "$1-$2");
+        } else {
+          v = v.replace(/(\\d{2})(\\d)/, "$1.$2").replace(/(\\d{3})(\\d)/, "$1.$2").replace(/(\\d{3})(\\d)/, "$1/$2").replace(/(\\d{4})(\\d{1,2})$/, "$1-$2");
+        }
+        this.value = v;
+      });
+
+      document.getElementById("cep").addEventListener("input", function () {
+        var v = apenasDigitos(this.value).slice(0, 8);
+        v = v.replace(/(\\d{5})(\\d)/, "$1-$2");
+        this.value = v;
+      });
+
+      document.getElementById("whatsapp").addEventListener("input", function () {
+        var v = apenasDigitos(this.value).slice(0, 11);
+        if (v.length > 10) {
+          v = v.replace(/(\\d{2})(\\d{5})(\\d{4})/, "($1) $2-$3");
+        } else if (v.length > 5) {
+          v = v.replace(/(\\d{2})(\\d{4})(\\d{0,4})/, "($1) $2-$3");
+        } else if (v.length > 2) {
+          v = v.replace(/(\\d{2})(\\d{0,5})/, "($1) $2");
+        } else if (v.length > 0) {
+          v = v.replace(/(\\d{0,2})/, "($1");
+        }
+        this.value = v;
+      });
+
+      document.getElementById("numero").addEventListener("input", function () {
+        this.value = apenasDigitos(this.value);
+      });
+    </script>
     `
   );
 }
@@ -95,16 +135,26 @@ cadastroRouter.get("/", (_req, res) => {
   res.send(paginaFormulario());
 });
 
-cadastroRouter.post("/", async (req, res) => {
-  const { nome, cpfCnpj, email, whatsapp, categoria, bairro, cidade, cep, endereco, numero } = req.body ?? {};
+function somenteDigitos(valor: string): string {
+  return valor.replace(/\D/g, "");
+}
 
-  if (!nome || !cpfCnpj || !email || !whatsapp || !categoria || !bairro || !cidade || !cep || !endereco || !numero) {
+cadastroRouter.post("/", async (req, res) => {
+  const { nome, cpfCnpj: cpfCnpjBruto, email, whatsapp: whatsappBruto, categoria, bairro, cidade, cep: cepBruto, endereco, numero } = req.body ?? {};
+
+  if (!nome || !cpfCnpjBruto || !email || !whatsappBruto || !categoria || !bairro || !cidade || !cepBruto || !endereco || !numero) {
     return res.status(400).send(paginaFormulario("Preencha todos os campos."));
   }
 
   if (!CATEGORIAS.includes(categoria)) {
     return res.status(400).send(paginaFormulario("Categoria inválida."));
   }
+
+  // O formulário já mascara esses campos, mas normalizamos aqui também (defesa extra,
+  // e é o formato que o resto do sistema espera: WhatsApp sempre com DDI 55).
+  const cpfCnpj = somenteDigitos(cpfCnpjBruto);
+  const cep = somenteDigitos(cepBruto);
+  const whatsapp = `55${somenteDigitos(whatsappBruto)}`;
 
   try {
     const fornecedorId = await criarFornecedorPendente({ nome, categoria, bairro, cidade, whatsapp, email, cpfCnpj });

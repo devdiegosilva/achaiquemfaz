@@ -1,10 +1,15 @@
 import { Router } from "express";
 import { classificarDemanda } from "../services/ai";
-import { buscarFornecedoresDisponiveis, registrarDemanda, registrarNotificacoes } from "../services/supabase";
+import {
+  buscarFornecedoresDisponiveis,
+  buscarCategoriasFornecedores,
+  registrarDemanda,
+  registrarNotificacoes,
+} from "../services/supabase";
 import { enviarMensagemWhatsapp } from "../services/whatsapp";
 import { consumirPendente, salvarPendente } from "../services/conversationState";
 import { montarMensagemFornecedor } from "../services/mensagens";
-import type { MensagemRecebida } from "../types";
+import { CATEGORIAS_BASE, type MensagemRecebida } from "../types";
 
 export const webhookRouter = Router();
 
@@ -33,9 +38,12 @@ webhookRouter.post("/whatsapp", async (req, res) => {
     const pendente = consumirPendente(mensagem.telefone);
     const mensagemCompleta = pendente ? `${pendente.mensagemOriginal}\n${mensagem.texto}` : mensagem.texto;
 
-    const classificacao = await classificarDemanda(mensagemCompleta);
+    const categoriasCadastradas = await buscarCategoriasFornecedores();
+    const categoriasParaIA = Array.from(new Set([...Object.keys(CATEGORIAS_BASE), ...categoriasCadastradas]));
 
-    if (!classificacao.categoria) {
+    const classificacao = await classificarDemanda(mensagemCompleta, categoriasParaIA);
+
+    if (!classificacao.servicoDescrito) {
       salvarPendente(mensagem.telefone, { mensagemOriginal: mensagemCompleta });
       await enviarMensagemWhatsapp(
         mensagem.telefone,
@@ -44,12 +52,21 @@ webhookRouter.post("/whatsapp", async (req, res) => {
       return res.sendStatus(200);
     }
 
-    const fornecedores = await buscarFornecedoresDisponiveis(classificacao.categoria, classificacao.bairro ?? undefined);
+    if (!classificacao.categoriaEncontrada) {
+      await enviarMensagemWhatsapp(
+        mensagem.telefone,
+        `No momento não encontramos prestadores de ${classificacao.servicoDescrito} disponíveis. Vamos avisar assim que tivermos.`
+      );
+      return res.sendStatus(200);
+    }
+
+    const categoria = classificacao.categoriaEncontrada;
+    const fornecedores = await buscarFornecedoresDisponiveis(categoria, classificacao.bairro ?? undefined);
 
     if (fornecedores.length === 0) {
       await enviarMensagemWhatsapp(
         mensagem.telefone,
-        `No momento não encontramos prestadores de ${classificacao.categoria} disponíveis. Vamos avisar assim que tivermos.`
+        `No momento não encontramos prestadores de ${categoria} disponíveis. Vamos avisar assim que tivermos.`
       );
       return res.sendStatus(200);
     }
@@ -57,7 +74,7 @@ webhookRouter.post("/whatsapp", async (req, res) => {
     const demandaId = await registrarDemanda({
       demandanteNome: mensagem.nome,
       demandanteWhatsapp: mensagem.telefone,
-      categoria: classificacao.categoria,
+      categoria,
       bairro: classificacao.bairro,
       mensagemOriginal: mensagemCompleta,
     });
@@ -79,7 +96,7 @@ webhookRouter.post("/whatsapp", async (req, res) => {
     const nomesFornecedores = fornecedores.map((f) => f.nome).join(", ");
     await enviarMensagemWhatsapp(
       mensagem.telefone,
-      `Encontramos ${fornecedores.length} prestador(es) de ${classificacao.categoria} e avisamos: ${nomesFornecedores}. Eles devem entrar em contato em breve.`
+      `Encontramos ${fornecedores.length} prestador(es) de ${categoria} e avisamos: ${nomesFornecedores}. Eles devem entrar em contato em breve.`
     );
 
     return res.sendStatus(200);

@@ -1,21 +1,13 @@
 import { Router } from "express";
 import { paginaBase } from "../services/html";
-import { CATEGORIAS } from "../types";
+import { buscarCategoriasFornecedores } from "../services/supabase";
+import { CATEGORIAS_BASE } from "../types";
 
 export const landingRouter = Router();
 
-const LABEL_CATEGORIA: Record<string, string> = {
-  eletricista: "Eletricista",
-  encanador: "Encanador",
-  pedreiro: "Pedreiro",
-  pintor: "Pintor",
-  marceneiro: "Marceneiro",
-  chaveiro: "Chaveiro",
-  jardineiro: "Jardineiro",
-  diarista: "Diarista",
-  dedetizador: "Dedetizador",
-  tecnico_eletrodomesticos: "Técnico em eletrodomésticos",
-};
+function rotuloCategoria(categoria: string): string {
+  return CATEGORIAS_BASE[categoria] ?? categoria.charAt(0).toUpperCase() + categoria.slice(1);
+}
 
 const CSS_EXTRA = `
   .container { max-width: 680px; }
@@ -40,8 +32,12 @@ const CSS_EXTRA = `
   footer { text-align: center; color: #9aa0a6; margin-top: 64px; font-size: 0.85rem; }
 `;
 
-landingRouter.get("/", (_req, res) => {
-  const categorias = CATEGORIAS.map((cat) => `<span>${LABEL_CATEGORIA[cat]}</span>`).join("");
+landingRouter.get("/", async (_req, res) => {
+  const categoriasCadastradas = await buscarCategoriasFornecedores().catch(() => [] as string[]);
+  const categoriasParaExibir = Array.from(new Set([...Object.keys(CATEGORIAS_BASE), ...categoriasCadastradas])).sort(
+    (a, b) => rotuloCategoria(a).localeCompare(rotuloCategoria(b), "pt-BR")
+  );
+  const categorias = categoriasParaExibir.map((cat) => `<span>${rotuloCategoria(cat)}</span>`).join("");
 
   const corpo = `
       <header class="hero">
@@ -82,6 +78,7 @@ landingRouter.get("/", (_req, res) => {
       <section>
         <h2>Áreas atendidas</h2>
         <div class="categorias">${categorias}</div>
+        <p class="subtitle" style="margin-top: 16px; margin-bottom: 0;">Não achou a sua? No cadastro tem a opção "Outro" — atendemos qualquer tipo de serviço.</p>
       </section>
 
       <section class="preco">

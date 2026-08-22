@@ -26,6 +26,20 @@ export async function buscarFornecedoresDisponiveis(categoria: string, bairro?: 
   return data ?? [];
 }
 
+// Categorias que já têm pelo menos um fornecedor ativo/trial cadastrado — usado tanto
+// para a IA casar a demanda do cliente com categorias "outro" quanto para exibir na landing page.
+export async function buscarCategoriasFornecedores(): Promise<string[]> {
+  const trialValidoDesde = new Date(Date.now() - TRIAL_DIAS * 24 * 60 * 60 * 1000).toISOString();
+
+  const { data, error } = await supabase
+    .from("fornecedores")
+    .select("categoria")
+    .or(`status.eq.ativo,and(status.eq.trial,created_at.gte.${trialValidoDesde})`);
+
+  if (error) throw error;
+  return Array.from(new Set((data ?? []).map((f) => f.categoria as string)));
+}
+
 export async function registrarDemanda(params: {
   demandanteNome: string | null;
   demandanteWhatsapp: string;

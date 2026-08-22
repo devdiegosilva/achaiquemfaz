@@ -3,25 +3,14 @@ import axios from "axios";
 import { criarCheckoutAssinatura } from "../services/asaas";
 import { criarFornecedorPendente, salvarAsaasCheckoutId, removerFornecedor } from "../services/supabase";
 import { paginaBase } from "../services/html";
-import { CATEGORIAS, type Categoria } from "../types";
+import { CATEGORIAS_BASE } from "../types";
 
 export const cadastroRouter = Router();
 
-const LABEL_CATEGORIA: Record<Categoria, string> = {
-  eletricista: "Eletricista",
-  encanador: "Encanador",
-  pedreiro: "Pedreiro",
-  pintor: "Pintor",
-  marceneiro: "Marceneiro",
-  chaveiro: "Chaveiro",
-  jardineiro: "Jardineiro",
-  diarista: "Diarista",
-  dedetizador: "Dedetizador",
-  tecnico_eletrodomesticos: "Técnico em eletrodomésticos",
-};
-
 function paginaFormulario(erro?: string): string {
-  const opcoes = CATEGORIAS.map((cat) => `<option value="${cat}">${LABEL_CATEGORIA[cat]}</option>`).join("");
+  const opcoes = Object.entries(CATEGORIAS_BASE)
+    .map(([valor, rotulo]) => `<option value="${valor}">${rotulo}</option>`)
+    .join("");
   return paginaBase(
     "Cadastro de fornecedor",
     `
@@ -45,7 +34,16 @@ function paginaFormulario(erro?: string): string {
       </div>
 
       <label for="categoria">Categoria de serviço</label>
-      <select id="categoria" name="categoria" required>${opcoes}</select>
+      <select id="categoria" name="categoria" required>
+        <option value="">Selecione...</option>
+        ${opcoes}
+        <option value="outro">Outro (não está na lista)</option>
+      </select>
+
+      <div id="categoriaOutraWrapper" style="display: none;">
+        <label for="categoriaOutra">Qual serviço você presta?</label>
+        <input type="text" id="categoriaOutra" name="categoriaOutra" placeholder="Ex: personal organizer" />
+      </div>
 
       <label for="bairro">Bairro</label>
       <input type="text" id="bairro" name="bairro" required />
@@ -102,6 +100,19 @@ function paginaFormulario(erro?: string): string {
       document.getElementById("numero").addEventListener("input", function () {
         this.value = apenasDigitos(this.value);
       });
+
+      document.getElementById("categoria").addEventListener("change", function () {
+        var wrapper = document.getElementById("categoriaOutraWrapper");
+        var campoOutro = document.getElementById("categoriaOutra");
+        if (this.value === "outro") {
+          wrapper.style.display = "block";
+          campoOutro.required = true;
+        } else {
+          wrapper.style.display = "none";
+          campoOutro.required = false;
+          campoOutro.value = "";
+        }
+      });
     </script>
     `
   );
@@ -116,14 +127,34 @@ function somenteDigitos(valor: string): string {
 }
 
 cadastroRouter.post("/", async (req, res) => {
-  const { nome, cpfCnpj: cpfCnpjBruto, email, whatsapp: whatsappBruto, categoria, bairro, cidade, cep: cepBruto, endereco, numero } = req.body ?? {};
+  const {
+    nome,
+    cpfCnpj: cpfCnpjBruto,
+    email,
+    whatsapp: whatsappBruto,
+    categoria: categoriaSelecionada,
+    categoriaOutra,
+    bairro,
+    cidade,
+    cep: cepBruto,
+    endereco,
+    numero,
+  } = req.body ?? {};
 
-  if (!nome || !cpfCnpjBruto || !email || !whatsappBruto || !categoria || !bairro || !cidade || !cepBruto || !endereco || !numero) {
+  if (!nome || !cpfCnpjBruto || !email || !whatsappBruto || !categoriaSelecionada || !bairro || !cidade || !cepBruto || !endereco || !numero) {
     return res.status(400).send(paginaFormulario("Preencha todos os campos."));
   }
 
-  if (!CATEGORIAS.includes(categoria)) {
+  let categoria: string;
+  if (categoriaSelecionada === "outro") {
+    if (!categoriaOutra || !categoriaOutra.trim()) {
+      return res.status(400).send(paginaFormulario("Informe qual serviço você presta."));
+    }
+    categoria = categoriaOutra.trim().toLowerCase();
+  } else if (!Object.keys(CATEGORIAS_BASE).includes(categoriaSelecionada)) {
     return res.status(400).send(paginaFormulario("Categoria inválida."));
+  } else {
+    categoria = categoriaSelecionada;
   }
 
   // O formulário já mascara esses campos, mas normalizamos aqui também (defesa extra,

@@ -53,7 +53,7 @@ src/
     webhook.ts             # recebe mensagens do WhatsApp e orquestra o fluxo
     cadastro.ts             # formulário de cadastro de fornecedor + checkout
     webhookPagamento.ts      # confirma pagamento e ativa o fornecedor
-  types/index.ts          # tipos e lista de categorias de serviço
+  types/index.ts          # tipos e lista base de categorias de serviço (aberta a "outro")
 db/schema.sql             # schema das tabelas (fornecedores, demandas, demandas_notificacoes)
 ```
 

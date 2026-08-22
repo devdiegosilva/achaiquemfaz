@@ -48,7 +48,7 @@ export async function criarCheckoutAssinatura(params: {
       cancelUrl: `${env.backendPublicUrl}/cadastro/cancelado`,
       expiredUrl: `${env.backendPublicUrl}/cadastro/expirado`,
     },
-    items: [{ name: "Assinatura Ache Fornecedores", quantity: 1, value: env.assinaturaValorMensal }],
+    items: [{ name: "Assinatura Achaí Quem Faz", quantity: 1, value: env.assinaturaValorMensal }],
     customerData: {
       name: params.nome,
       cpfCnpj: somenteDigitos(params.cpfCnpj),

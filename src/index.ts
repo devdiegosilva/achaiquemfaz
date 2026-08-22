@@ -16,5 +16,5 @@ app.use("/cadastro", cadastroRouter);
 app.use("/", landingRouter);
 
 app.listen(env.port, () => {
-  console.log(`Ache Fornecedores rodando na porta ${env.port}`);
+  console.log(`Achaí Quem Faz rodando na porta ${env.port}`);
 });

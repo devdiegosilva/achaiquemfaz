@@ -1,5 +1,5 @@
 {
-  "name": "ache-fornecedores",
+  "name": "achai-quem-faz",
   "version": "0.1.0",
   "description": "Agente de conexao entre demandantes e prestadores de servico via WhatsApp",
   "private": true,

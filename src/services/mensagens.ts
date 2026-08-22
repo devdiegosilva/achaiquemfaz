@@ -4,15 +4,15 @@ type TemplateFornecedor = (nomeDemandante: string, bairroTexto: string, telefone
 
 const TEMPLATES_FORNECEDOR: TemplateFornecedor[] = [
   (nome, bairro, telefone) =>
-    `Nós da Ache Fornecedores encontramos uma nova demanda pra você! ${nome} está à procura dos seus serviços${bairro}. Entre em contato pelo WhatsApp ${telefone}.`,
+    `Nós da Achaí Quem Faz encontramos uma nova demanda pra você! ${nome} está à procura dos seus serviços${bairro}. Entre em contato pelo WhatsApp ${telefone}.`,
   (nome, bairro, telefone) =>
-    `A Ache Fornecedores tem um cliente esperando por você: ${nome} precisa dos seus serviços${bairro}. Fale com ele pelo WhatsApp ${telefone}.`,
+    `A Achaí Quem Faz tem um cliente esperando por você: ${nome} precisa dos seus serviços${bairro}. Fale com ele pelo WhatsApp ${telefone}.`,
   (nome, bairro, telefone) =>
-    `Mais uma oportunidade chegou pela Ache Fornecedores! ${nome} está buscando um profissional como você${bairro}. Contato: WhatsApp ${telefone}.`,
+    `Mais uma oportunidade chegou pela Achaí Quem Faz! ${nome} está buscando um profissional como você${bairro}. Contato: WhatsApp ${telefone}.`,
   (nome, bairro, telefone) =>
-    `Chegou demanda nova pela Ache Fornecedores: ${nome} precisa de ajuda com seus serviços${bairro}. Chama no WhatsApp ${telefone}.`,
+    `Chegou demanda nova pela Achaí Quem Faz: ${nome} precisa de ajuda com seus serviços${bairro}. Chama no WhatsApp ${telefone}.`,
   (nome, bairro, telefone) =>
-    `Aqui é a Ache Fornecedores! Temos um novo pedido pra você: ${nome} está procurando seus serviços${bairro}. Entre em contato pelo WhatsApp ${telefone}.`,
+    `Aqui é a Achaí Quem Faz! Temos um novo pedido pra você: ${nome} está procurando seus serviços${bairro}. Entre em contato pelo WhatsApp ${telefone}.`,
 ];
 
 export function montarMensagemFornecedor(
@@ -26,5 +26,5 @@ export function montarMensagemFornecedor(
 
   if (!isTrial) return mensagem;
 
-  return `${mensagem}\n\nVocê recebeu esta demanda da Ache Fornecedores. Para receber mais indicações como esta, acesse ${env.backendPublicUrl}/cadastro e confira nossos planos disponíveis.`;
+  return `${mensagem}\n\nVocê recebeu esta demanda da Achaí Quem Faz. Para receber mais indicações como esta, acesse ${env.backendPublicUrl}/cadastro e confira nossos planos disponíveis.`;
 }

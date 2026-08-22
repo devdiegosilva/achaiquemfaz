@@ -1,4 +1,4 @@
-# Ache Fornecedores
+# Achaí Quem Faz
 
 Agente que conecta demandantes e prestadores de serviço via WhatsApp, começando em João Pessoa/PB.
 
@@ -15,7 +15,9 @@ Agente que conecta demandantes e prestadores de serviço via WhatsApp, começand
 
 **Decisão de gateway de pagamento:** usando **Asaas** agora (conta pessoa física, CPF) porque a Pagar.me/Stone exige CNPJ no cadastro principal. Plano é migrar para **Pagar.me** assim que o usuário abrir CNPJ — a integração já foi pesquisada e documentada para quando isso acontecer.
 
-**Ainda não construído:** painel de gestão para o fornecedor, e a landing page ainda não tem domínio próprio (usa a URL do backend na Railway).
+**Marca:** o produto se chama **Achaí Quem Faz** (antigo "Ache Fornecedores", renomeado em 2026-08-22). Landing page e `/cadastro` usam uma identidade visual de "ordem de serviço" (papel kraft, picote, linhas de corte, botões estilo carimbo), servida por `services/html.ts` (`paginaTicket`).
+
+**Ainda não construído:** painel de gestão para o fornecedor, e a landing page ainda não tem domínio próprio (usa a URL do backend na Railway) — repositório GitHub e domínio Railway também ainda não foram renomeados para bater com a nova marca.
 
 ## Fluxo
 
@@ -49,8 +51,10 @@ src/
     conversationState.ts   # estado em memória para perguntas de esclarecimento
     mensagens.ts            # variações de texto enviadas aos fornecedores
     asaas.ts                # criação de checkout de assinatura via Asaas
+    html.ts                 # templates de página (paginaTicket = identidade "ordem de serviço")
   routes/
     webhook.ts             # recebe mensagens do WhatsApp e orquestra o fluxo
+    landing.ts              # landing page de apresentação (/)
     cadastro.ts             # formulário de cadastro de fornecedor + checkout
     webhookPagamento.ts      # confirma pagamento e ativa o fornecedor
   types/index.ts          # tipos e lista base de categorias de serviço (aberta a "outro")
@@ -75,3 +79,5 @@ npm run dev
 - Painel simples para o fornecedor gerenciar status (ativo/inativo) e ver demandas recebidas.
 - Migrar Evolution API → WhatsApp Cloud API oficial quando o volume justificar.
 - Migrar de Asaas para Pagar.me assim que o CNPJ estiver pronto.
+- Renomear repositório GitHub e domínio da Railway para bater com a marca Achaí Quem Faz, reconfigurando os webhooks da Evolution API e da Asaas em seguida.
+- Registrar e conectar o domínio próprio (achaiquemfaz) quando decidido.

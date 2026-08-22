@@ -1,4 +1,4 @@
--- Schema inicial do Ache Fornecedores (Supabase / Postgres)
+-- Schema inicial do Achaí Quem Faz (Supabase / Postgres)
 
 create table if not exists fornecedores (
   id uuid primary key default gen_random_uuid(),

@@ -2,68 +2,85 @@ import { Router } from "express";
 import axios from "axios";
 import { criarCheckoutAssinatura } from "../services/asaas";
 import { criarFornecedorPendente, salvarAsaasCheckoutId, removerFornecedor } from "../services/supabase";
-import { paginaBase } from "../services/html";
+import { paginaTicket } from "../services/html";
 import { CATEGORIAS_BASE } from "../types";
 
 export const cadastroRouter = Router();
+
+const CSS_FORMULARIO = `
+  form label { display: block; margin-top: 20px; margin-bottom: 6px; font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-muted); }
+  form input, form select {
+    width: 100%; padding: 11px 12px; border: 1px solid var(--line-strong); background: var(--paper-alt);
+    color: var(--ink); font-family: var(--font-body); font-size: 1rem; border-radius: 2px; box-sizing: border-box;
+  }
+  form input:focus, form select:focus { outline: 2px solid var(--work); outline-offset: 1px; }
+  .campo-tel { display: flex; gap: 8px; }
+  .campo-tel .ddi { padding: 11px 12px; border: 1px solid var(--line-strong); background: var(--paper-alt); color: var(--ink-muted); font-family: var(--font-mono); border-radius: 2px; }
+  .campo-tel input { flex: 1; }
+  .erro { font-family: var(--font-mono); font-size: 0.85rem; color: var(--stamp); border: 1px dashed var(--stamp); padding: 10px 12px; margin: 0 0 8px; }
+  form .stamp-btn { width: 100%; text-align: center; margin-top: 30px; }
+  .rotulo-secao { font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-muted); margin: 0; }
+`;
 
 function paginaFormulario(erro?: string): string {
   const opcoes = Object.entries(CATEGORIAS_BASE)
     .map(([valor, rotulo]) => `<option value="${valor}">${rotulo}</option>`)
     .join("");
-  return paginaBase(
-    "Cadastro de fornecedor",
-    `
-    <h1>Cadastre-se como fornecedor</h1>
-    <p class="subtitle">Receba demandas de clientes perto de você pelo WhatsApp.</p>
-    ${erro ? `<p class="erro">${erro}</p>` : ""}
-    <form method="POST" action="/cadastro">
-      <label for="nome">Nome completo</label>
-      <input type="text" id="nome" name="nome" required />
 
-      <label for="cpfCnpj">CPF ou CNPJ</label>
-      <input type="text" id="cpfCnpj" name="cpfCnpj" inputmode="numeric" placeholder="000.000.000-00" required />
+  const secoes = `
+    <section class="cadastro">
+      <h2>Cadastre-se como fornecedor</h2>
+      <p class="lede">Receba demandas de clientes perto de você pelo WhatsApp.</p>
+      ${erro ? `<p class="erro">${erro}</p>` : ""}
+      <form method="POST" action="/cadastro">
+        <label for="nome">Nome completo</label>
+        <input type="text" id="nome" name="nome" required />
 
-      <label for="email">E-mail</label>
-      <input type="email" id="email" name="email" required />
+        <label for="cpfCnpj">CPF ou CNPJ</label>
+        <input type="text" id="cpfCnpj" name="cpfCnpj" inputmode="numeric" placeholder="000.000.000-00" required />
 
-      <label for="whatsapp">WhatsApp</label>
-      <div style="display: flex; gap: 8px;">
-        <span style="padding: 10px; border: 1px solid #333; border-radius: 6px; background: #1a1d24; color: #9aa0a6;">+55</span>
-        <input type="tel" id="whatsapp" name="whatsapp" inputmode="numeric" placeholder="(83) 99999-9999" required style="flex: 1;" />
-      </div>
+        <label for="email">E-mail</label>
+        <input type="email" id="email" name="email" required />
 
-      <label for="categoria">Categoria de serviço</label>
-      <select id="categoria" name="categoria" required>
-        <option value="">Selecione...</option>
-        ${opcoes}
-        <option value="outro">Outro (não está na lista)</option>
-      </select>
+        <label for="whatsapp">WhatsApp</label>
+        <div class="campo-tel">
+          <span class="ddi">+55</span>
+          <input type="tel" id="whatsapp" name="whatsapp" inputmode="numeric" placeholder="(83) 99999-9999" required />
+        </div>
 
-      <div id="categoriaOutraWrapper" style="display: none;">
-        <label for="categoriaOutra">Qual serviço você presta?</label>
-        <input type="text" id="categoriaOutra" name="categoriaOutra" placeholder="Ex: personal organizer" />
-      </div>
+        <label for="categoria">Categoria de serviço</label>
+        <select id="categoria" name="categoria" required>
+          <option value="">Selecione...</option>
+          ${opcoes}
+          <option value="outro">Outro (não está na lista)</option>
+        </select>
 
-      <label for="bairro">Bairro</label>
-      <input type="text" id="bairro" name="bairro" required />
+        <div id="categoriaOutraWrapper" style="display: none;">
+          <label for="categoriaOutra">Qual serviço você presta?</label>
+          <input type="text" id="categoriaOutra" name="categoriaOutra" placeholder="Ex: personal organizer" />
+        </div>
 
-      <label for="cidade">Cidade</label>
-      <input type="text" id="cidade" name="cidade" value="João Pessoa" required />
+        <label for="bairro">Bairro</label>
+        <input type="text" id="bairro" name="bairro" required />
 
-      <p class="subtitle" style="margin-top: 24px;">Dados de cobrança (necessários para o pagamento por cartão)</p>
+        <label for="cidade">Cidade</label>
+        <input type="text" id="cidade" name="cidade" value="João Pessoa" required />
 
-      <label for="cep">CEP</label>
-      <input type="text" id="cep" name="cep" inputmode="numeric" placeholder="00000-000" required />
+        <div class="tear" aria-hidden="true" style="margin-top: 28px;"></div>
+        <p class="rotulo-secao" style="margin-top: 24px;">Dados de cobrança — necessários para o pagamento por cartão</p>
 
-      <label for="endereco">Endereço (rua)</label>
-      <input type="text" id="endereco" name="endereco" required />
+        <label for="cep">CEP</label>
+        <input type="text" id="cep" name="cep" inputmode="numeric" placeholder="00000-000" required />
 
-      <label for="numero">Número</label>
-      <input type="text" id="numero" name="numero" inputmode="numeric" required />
+        <label for="endereco">Endereço (rua)</label>
+        <input type="text" id="endereco" name="endereco" required />
 
-      <button type="submit">Continuar para pagamento</button>
-    </form>
+        <label for="numero">Número</label>
+        <input type="text" id="numero" name="numero" inputmode="numeric" required />
+
+        <button type="submit" class="stamp-btn">Continuar para pagamento</button>
+      </form>
+    </section>
     <script>
       function apenasDigitos(v) { return v.replace(/\\D/g, ""); }
 
@@ -114,8 +131,9 @@ function paginaFormulario(erro?: string): string {
         }
       });
     </script>
-    `
-  );
+  `;
+
+  return paginaTicket("Cadastro de fornecedor", secoes, CSS_FORMULARIO);
 }
 
 cadastroRouter.get("/", (_req, res) => {
@@ -201,13 +219,28 @@ cadastroRouter.post("/", async (req, res) => {
 });
 
 cadastroRouter.get("/sucesso", (_req, res) => {
-  res.send(paginaBase("Pagamento confirmado", `<div class="msg"><h1>Pagamento em processamento!</h1><p>Assim que confirmado, seu cadastro fica ativo e você começa a receber demandas.</p></div>`));
+  res.send(
+    paginaTicket(
+      "Pagamento confirmado",
+      `<section class="msg"><h2>Pagamento em processamento!</h2><p class="lede" style="margin: 0 auto;">Assim que confirmado, seu cadastro fica ativo e você começa a receber demandas.</p></section>`
+    )
+  );
 });
 
 cadastroRouter.get("/cancelado", (_req, res) => {
-  res.send(paginaBase("Pagamento cancelado", `<div class="msg"><h1>Pagamento cancelado</h1><p>Você pode tentar novamente quando quiser.</p></div>`));
+  res.send(
+    paginaTicket(
+      "Pagamento cancelado",
+      `<section class="msg"><h2>Pagamento cancelado</h2><p class="lede" style="margin: 0 auto;">Você pode tentar novamente quando quiser.</p></section>`
+    )
+  );
 });
 
 cadastroRouter.get("/expirado", (_req, res) => {
-  res.send(paginaBase("Link expirado", `<div class="msg"><h1>Link de pagamento expirado</h1><p>Faça o cadastro novamente para gerar um novo link.</p></div>`));
+  res.send(
+    paginaTicket(
+      "Link expirado",
+      `<section class="msg"><h2>Link de pagamento expirado</h2><p class="lede" style="margin: 0 auto;">Faça o cadastro novamente para gerar um novo link.</p></section>`
+    )
+  );
 });

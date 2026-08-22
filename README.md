@@ -2,22 +2,20 @@
 
 Agente que conecta demandantes e prestadores de serviço via WhatsApp, começando em João Pessoa/PB.
 
-## Status atual (atualizado em 2026-08-16)
+## Status atual (atualizado em 2026-08-22)
 
 **No ar e testado ponta a ponta:**
-- WhatsApp conectado (Evolution API, hospedada na Railway) → backend (Railway) → classificação da demanda via Claude → busca de fornecedor no Supabase → notificação ao fornecedor e confirmação ao demandante. Teste real feito com sucesso em 2026-08-16.
-
-**Construído, aguardando configuração final do usuário (não testado ainda):**
-- Landing page de cadastro de fornecedor em `/cadastro` com checkout de assinatura recorrente (Asaas, somente cartão de crédito — Pix não é permitido pela Asaas em cobranças recorrentes, R$ 97,90/mês).
-- Webhook de pagamento (`/webhook/pagamento`) que ativa o fornecedor quando o pagamento é confirmado e desativa automaticamente se uma cobrança vencer sem pagamento.
+- WhatsApp conectado (Evolution API, hospedada na Railway) → backend (Railway) → classificação da demanda via Claude → busca de fornecedor no Supabase → notificação ao fornecedor e confirmação ao demandante.
+- Cadastro de fornecedor completo: formulário `/cadastro` → checkout de assinatura na Asaas (somente cartão de crédito — Pix não é permitido pela Asaas em cobranças recorrentes, R$ 97,90/mês) → pagamento confirmado → webhook ativa o fornecedor automaticamente no Supabase.
+- Desativação automática via webhook quando uma cobrança vence sem pagamento.
 - Status `trial`: fornecedores cadastrados manualmente (indicação) recebem demandas de graça por 30 dias, com uma chamada para conhecer os planos na mensagem que recebem.
-- Pendências para ativar isso em produção: rodar migração SQL no Supabase, configurar 5 variáveis de ambiente novas na Railway, e configurar o webhook no painel do Asaas.
+- Categorias de serviço abertas: lista base de ~38 categorias + opção "Outro" no cadastro; a IA casa a demanda do cliente com as categorias realmente cadastradas (base + personalizadas).
+
+**Marca e visual:** o produto se chama **Achaí Quem Faz** (antigo "Ache Fornecedores", renomeado em 2026-08-22 — repositório GitHub e domínio Railway já atualizados para bater com a nova marca). Landing page e `/cadastro` usam uma identidade visual de "ordem de serviço" (papel kraft, picote, linhas de corte, botões estilo carimbo), servida por `services/html.ts` (`paginaTicket`).
 
 **Decisão de gateway de pagamento:** usando **Asaas** agora (conta pessoa física, CPF) porque a Pagar.me/Stone exige CNPJ no cadastro principal. Plano é migrar para **Pagar.me** assim que o usuário abrir CNPJ — a integração já foi pesquisada e documentada para quando isso acontecer.
 
-**Marca:** o produto se chama **Achaí Quem Faz** (antigo "Ache Fornecedores", renomeado em 2026-08-22). Landing page e `/cadastro` usam uma identidade visual de "ordem de serviço" (papel kraft, picote, linhas de corte, botões estilo carimbo), servida por `services/html.ts` (`paginaTicket`).
-
-**Ainda não construído:** painel de gestão para o fornecedor, e a landing page ainda não tem domínio próprio (usa a URL do backend na Railway) — repositório GitHub e domínio Railway também ainda não foram renomeados para bater com a nova marca.
+**Ainda não construído:** painel de gestão para o fornecedor, e a landing page ainda não tem domínio próprio (usa a URL gerada pela Railway).
 
 ## Fluxo
 
@@ -79,5 +77,4 @@ npm run dev
 - Painel simples para o fornecedor gerenciar status (ativo/inativo) e ver demandas recebidas.
 - Migrar Evolution API → WhatsApp Cloud API oficial quando o volume justificar.
 - Migrar de Asaas para Pagar.me assim que o CNPJ estiver pronto.
-- Renomear repositório GitHub e domínio da Railway para bater com a marca Achaí Quem Faz, reconfigurando os webhooks da Evolution API e da Asaas em seguida.
 - Registrar e conectar o domínio próprio (achaiquemfaz) quando decidido.

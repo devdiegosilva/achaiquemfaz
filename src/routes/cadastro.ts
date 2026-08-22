@@ -1,7 +1,7 @@
 import { Router } from "express";
 import axios from "axios";
 import { criarCheckoutAssinatura } from "../services/asaas";
-import { criarFornecedorPendente, salvarAsaasCheckoutId } from "../services/supabase";
+import { criarFornecedorPendente, salvarAsaasCheckoutId, removerFornecedor } from "../services/supabase";
 import { CATEGORIAS, type Categoria } from "../types";
 
 export const cadastroRouter = Router();
@@ -156,8 +156,10 @@ cadastroRouter.post("/", async (req, res) => {
   const cep = somenteDigitos(cepBruto);
   const whatsapp = `55${somenteDigitos(whatsappBruto)}`;
 
+  let fornecedorId: string | undefined;
+
   try {
-    const fornecedorId = await criarFornecedorPendente({ nome, categoria, bairro, cidade, whatsapp, email, cpfCnpj });
+    fornecedorId = await criarFornecedorPendente({ nome, categoria, bairro, cidade, whatsapp, email, cpfCnpj });
     const { link, checkoutId } = await criarCheckoutAssinatura({
       nome,
       cpfCnpj,
@@ -172,11 +174,21 @@ cadastroRouter.post("/", async (req, res) => {
     await salvarAsaasCheckoutId(fornecedorId, checkoutId);
     return res.redirect(303, link);
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      console.error("Erro ao criar cadastro/checkout (resposta do Asaas):", JSON.stringify(error.response?.data));
-    } else {
-      console.error("Erro ao criar cadastro/checkout:", error);
+    if (fornecedorId) {
+      await removerFornecedor(fornecedorId).catch((erroLimpeza) =>
+        console.error("Falha ao remover cadastro pendente após erro:", erroLimpeza)
+      );
     }
+
+    if (axios.isAxiosError(error) && Array.isArray(error.response?.data?.errors)) {
+      const mensagens = (error.response.data.errors as Array<{ description: string }>)
+        .map((e) => e.description)
+        .join(" ");
+      console.error("Erro ao criar cadastro/checkout (resposta do Asaas):", JSON.stringify(error.response.data));
+      return res.status(400).send(paginaFormulario(mensagens));
+    }
+
+    console.error("Erro ao criar cadastro/checkout:", error);
     return res.status(500).send(paginaFormulario("Não foi possível continuar o cadastro agora. Tente novamente em instantes."));
   }
 });

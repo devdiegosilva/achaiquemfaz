@@ -90,6 +90,11 @@ export async function salvarAsaasCheckoutId(fornecedorId: string, checkoutId: st
   if (error) throw error;
 }
 
+export async function removerFornecedor(fornecedorId: string): Promise<void> {
+  const { error } = await supabase.from("fornecedores").delete().eq("id", fornecedorId);
+  if (error) throw error;
+}
+
 export async function ativarFornecedorPorId(fornecedorId: string, asaasCustomerId: string | null): Promise<boolean> {
   const { data, error } = await supabase
     .from("fornecedores")

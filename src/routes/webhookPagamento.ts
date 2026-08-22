@@ -8,6 +8,23 @@ import {
 
 export const webhookPagamentoRouter = Router();
 
+async function ativarPorReferenciaOuCliente(
+  fornecedorId: string | undefined,
+  asaasCustomerId: string | undefined,
+  origem: string
+): Promise<void> {
+  let ativado = false;
+  if (fornecedorId && asaasCustomerId) {
+    ativado = await ativarFornecedorPorId(fornecedorId, asaasCustomerId);
+  }
+  if (!ativado && asaasCustomerId) {
+    ativado = await ativarFornecedorPorAsaasCustomerId(asaasCustomerId);
+  }
+  if (!ativado) {
+    console.error(`Webhook de ${origem} sem fornecedor correspondente:`, { fornecedorId, asaasCustomerId });
+  }
+}
+
 webhookPagamentoRouter.post("/pagamento", async (req, res) => {
   const tokenRecebido = req.header("asaas-access-token");
   if (tokenRecebido !== env.asaasWebhookToken) {
@@ -15,22 +32,17 @@ webhookPagamentoRouter.post("/pagamento", async (req, res) => {
   }
 
   try {
-    const { event, payment } = req.body ?? {};
+    const { event, payment, checkout } = req.body ?? {};
 
+    // Primeira cobrança da assinatura: a Asaas confirma o pagamento pelo evento do
+    // Checkout (CHECKOUT_PAID), não pelo evento padrão de cobrança.
+    if (event === "CHECKOUT_PAID" && checkout) {
+      await ativarPorReferenciaOuCliente(checkout.externalReference, checkout.customer, "checkout pago");
+    }
+
+    // Renovações seguintes da assinatura chegam pelos eventos padrão de cobrança.
     if (event === "PAYMENT_CONFIRMED" && payment) {
-      const fornecedorId: string | undefined = payment.externalReference;
-      const asaasCustomerId: string | undefined = payment.customer;
-
-      let ativado = false;
-      if (fornecedorId && asaasCustomerId) {
-        ativado = await ativarFornecedorPorId(fornecedorId, asaasCustomerId);
-      }
-      if (!ativado && asaasCustomerId) {
-        ativado = await ativarFornecedorPorAsaasCustomerId(asaasCustomerId);
-      }
-      if (!ativado) {
-        console.error("Webhook de pagamento confirmado sem fornecedor correspondente:", { fornecedorId, asaasCustomerId });
-      }
+      await ativarPorReferenciaOuCliente(payment.externalReference, payment.customer, "pagamento confirmado");
     }
 
     if (event === "PAYMENT_OVERDUE" && payment?.customer) {

@@ -14,8 +14,8 @@ async function ativarPorReferenciaOuCliente(
   origem: string
 ): Promise<void> {
   let ativado = false;
-  if (fornecedorId && asaasCustomerId) {
-    ativado = await ativarFornecedorPorId(fornecedorId, asaasCustomerId);
+  if (fornecedorId) {
+    ativado = await ativarFornecedorPorId(fornecedorId, asaasCustomerId ?? null);
   }
   if (!ativado && asaasCustomerId) {
     ativado = await ativarFornecedorPorAsaasCustomerId(asaasCustomerId);

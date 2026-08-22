@@ -90,10 +90,10 @@ export async function salvarAsaasCheckoutId(fornecedorId: string, checkoutId: st
   if (error) throw error;
 }
 
-export async function ativarFornecedorPorId(fornecedorId: string, asaasCustomerId: string): Promise<boolean> {
+export async function ativarFornecedorPorId(fornecedorId: string, asaasCustomerId: string | null): Promise<boolean> {
   const { data, error } = await supabase
     .from("fornecedores")
-    .update({ status: "ativo", asaas_customer_id: asaasCustomerId })
+    .update(asaasCustomerId ? { status: "ativo", asaas_customer_id: asaasCustomerId } : { status: "ativo" })
     .eq("id", fornecedorId)
     .select("id")
     .maybeSingle();

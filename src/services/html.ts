@@ -12,31 +12,31 @@ export function paginaTicket(titulo: string, secoes: string, cssExtra = ""): str
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --backdrop: #b7b09c;
-    --paper: #e6dfc7;
-    --paper-alt: #ddd5ba;
-    --ink: #232620;
-    --ink-muted: #5b5a4e;
-    --stamp: #b23a20;
-    --stamp-ink: #fbf3e4;
-    --work: #2f4858;
-    --line: #a79f86;
-    --line-strong: #8c8468;
-    --shadow: rgba(35, 38, 32, 0.28);
+    --backdrop: #e3d3b8;
+    --paper: #fcf1e4;
+    --paper-alt: #f6e7d3;
+    --ink: #2e322c;
+    --ink-muted: #756b5c;
+    --stamp: #c04a1f;
+    --stamp-ink: #fcf1e4;
+    --work: #145c45;
+    --line: #d9c9ab;
+    --line-strong: #c2ae87;
+    --shadow: rgba(30, 26, 16, 0.22);
     --font-display: "Big Shoulders Display", "Arial Narrow", sans-serif;
     --font-body: "Work Sans", system-ui, sans-serif;
     --font-mono: "IBM Plex Mono", "Courier New", monospace;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --backdrop: #0e100d; --paper: #26241f; --paper-alt: #2d2b24; --ink: #ece4cf; --ink-muted: #b4ac94;
-      --stamp: #e2603d; --stamp-ink: #1b1611; --work: #7db0cc; --line: #4a473a; --line-strong: #605c4a;
+      --backdrop: #0d1310; --paper: #1a231d; --paper-alt: #212b23; --ink: #ece4cf; --ink-muted: #b4ac94;
+      --stamp: #ff8a63; --stamp-ink: #241208; --work: #7fd9ae; --line: #3a4a3f; --line-strong: #4a5c4e;
       --shadow: rgba(0, 0, 0, 0.55);
     }
   }
   :root[data-theme="dark"] {
-    --backdrop: #0e100d; --paper: #26241f; --paper-alt: #2d2b24; --ink: #ece4cf; --ink-muted: #b4ac94;
-    --stamp: #e2603d; --stamp-ink: #1b1611; --work: #7db0cc; --line: #4a473a; --line-strong: #605c4a;
+    --backdrop: #0d1310; --paper: #1a231d; --paper-alt: #212b23; --ink: #ece4cf; --ink-muted: #b4ac94;
+    --stamp: #ff8a63; --stamp-ink: #241208; --work: #7fd9ae; --line: #3a4a3f; --line-strong: #4a5c4e;
     --shadow: rgba(0, 0, 0, 0.55);
   }
   * { box-sizing: border-box; }
@@ -57,14 +57,14 @@ export function paginaTicket(titulo: string, secoes: string, cssExtra = ""): str
   @media (prefers-reduced-motion: no-preference) { .stamp-num.bump { animation: subida 0.4s ease-out; } }
   section { padding: clamp(28px, 6vw, 48px) clamp(20px, 6vw, 48px); }
   .hero { padding-top: 12px; }
-  h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(2.1rem, 6vw, 3.1rem); line-height: 1.02; letter-spacing: -0.01em; margin: 0 0 18px; text-wrap: balance; max-width: 15ch; }
+  h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(2.1rem, 6vw, 3.1rem); line-height: 1.02; letter-spacing: -0.01em; margin: 0 0 18px; text-wrap: balance; max-width: 15ch; color: var(--work); }
   p.lede { font-size: 1.08rem; color: var(--ink-muted); max-width: 46ch; margin: 0 0 28px; }
   .stamp-btn { display: inline-block; font-family: var(--font-display); font-weight: 700; font-size: 1.05rem; letter-spacing: 0.03em; text-transform: uppercase; text-decoration: none; color: var(--stamp); background: transparent; border: 3px solid var(--stamp); padding: 13px 26px; border-radius: 3px; outline-offset: 4px; transform: rotate(-1.2deg); transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease; position: relative; }
   .stamp-btn::after { content: ""; position: absolute; inset: 4px; border: 1px solid var(--stamp); border-radius: 1px; pointer-events: none; }
   .stamp-btn:hover { background: var(--stamp); color: var(--stamp-ink); transform: rotate(-1.2deg) scale(1.03); }
   .stamp-btn:active { transform: rotate(-0.6deg) scale(0.97); }
   .stamp-btn:focus-visible { outline: 2px solid var(--work); }
-  h2 { font-family: var(--font-display); font-weight: 700; font-size: 1.5rem; text-transform: uppercase; letter-spacing: 0.01em; margin: 0 0 22px; }
+  h2 { font-family: var(--font-display); font-weight: 700; font-size: 1.5rem; text-transform: uppercase; letter-spacing: 0.01em; margin: 0 0 22px; color: var(--work); }
   ol.ticket-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 18px; }
   ol.ticket-list li { display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: start; }
   ol.ticket-list .num { font-family: var(--font-mono); font-weight: 600; font-size: 1.6rem; color: var(--work); line-height: 1; padding-top: 2px; }

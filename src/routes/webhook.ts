@@ -14,6 +14,10 @@ import { CATEGORIAS_BASE, type MensagemRecebida } from "../types";
 
 export const webhookRouter = Router();
 
+function aguardar(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 // Extrai telefone/nome/texto do payload de evento "messages.upsert" da Evolution API.
 function extrairMensagem(body: any): MensagemRecebida | null {
   const data = body?.data;
@@ -91,14 +95,16 @@ webhookRouter.post("/whatsapp", async (req, res) => {
     const bairroTexto = classificacao.bairro ? ` no bairro ${classificacao.bairro}` : "";
     const nomeDemandante = mensagem.nome ?? "Um cliente";
 
-    await Promise.all(
-      fornecedores.map((fornecedor) =>
-        enviarMensagemWhatsapp(
-          fornecedor.whatsapp,
-          montarMensagemFornecedor(nomeDemandante, bairroTexto, mensagem.telefone, fornecedor.status === "trial")
-        )
-      )
-    );
+    // Envia um de cada vez, com um intervalo entre mensagens — disparar tudo de uma vez
+    // pra vários números se parece com spam automatizado e é um dos gatilhos de bloqueio
+    // de conta no WhatsApp.
+    for (const fornecedor of fornecedores) {
+      await enviarMensagemWhatsapp(
+        fornecedor.whatsapp,
+        montarMensagemFornecedor(nomeDemandante, bairroTexto, mensagem.telefone, fornecedor.status === "trial")
+      );
+      await aguardar(2000 + Math.random() * 2000);
+    }
 
     await registrarNotificacoes(demandaId, fornecedores.map((f) => f.id));
 

@@ -44,7 +44,13 @@ export async function classificarDemanda(mensagem: string, categoriasDisponiveis
     }
   );
 
-  const textoResposta: string = response.data.content[0].text;
+  const blocoTexto = response.data.content.find((bloco: { type: string; text?: string }) => bloco.type === "text");
+  if (!blocoTexto?.text) {
+    throw new Error("Resposta da IA sem bloco de texto: " + JSON.stringify(response.data.content));
+  }
+
+  // O modelo às vezes cerca o JSON com ```json ... ``` apesar da instrução — removemos antes do parse.
+  const textoResposta = blocoTexto.text.trim().replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "").trim();
   const parsed = JSON.parse(textoResposta);
 
   return {

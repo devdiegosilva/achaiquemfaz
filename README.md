@@ -10,6 +10,7 @@ Agente que conecta demandantes e prestadores de serviço via WhatsApp, começand
 - Desativação automática via webhook quando uma cobrança vence sem pagamento.
 - Status `trial`: fornecedores cadastrados manualmente (indicação) recebem demandas de graça por 30 dias, com uma chamada para conhecer os planos na mensagem que recebem.
 - Categorias de serviço abertas: lista base de ~38 categorias + opção "Outro" no cadastro; a IA casa a demanda do cliente com as categorias realmente cadastradas (base + personalizadas).
+- Página inicial (`/`) funciona como um hub: separa quem precisa de um serviço (vai direto pro WhatsApp) de quem quer virar fornecedor (vai pra `/fornecedores`).
 
 **Marca e visual:** o produto se chama **Achaí Quem Faz** (antigo "Ache Fornecedores", renomeado em 2026-08-22 — repositório GitHub e domínio Railway já atualizados para bater com a nova marca). Landing page e `/cadastro` usam uma identidade visual de "ordem de serviço" (papel kraft, picote, linhas de corte, botões estilo carimbo), servida por `services/html.ts` (`paginaTicket`).
 
@@ -52,7 +53,8 @@ src/
     html.ts                 # templates de página (paginaTicket = identidade "ordem de serviço")
   routes/
     webhook.ts             # recebe mensagens do WhatsApp e orquestra o fluxo
-    landing.ts              # landing page de apresentação (/)
+    inicio.ts               # página inicial (/) — escolha entre demandante e fornecedor
+    landing.ts              # landing page de apresentação para fornecedores (/fornecedores)
     cadastro.ts             # formulário de cadastro de fornecedor + checkout
     webhookPagamento.ts      # confirma pagamento e ativa o fornecedor
   types/index.ts          # tipos e lista base de categorias de serviço (aberta a "outro")

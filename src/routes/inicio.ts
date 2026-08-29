@@ -41,5 +41,5 @@ inicioRouter.get("/", (_req, res) => {
     </section>
   `;
 
-  res.send(paginaTicket("Achaí Quem Faz", secoes, CSS_INICIO));
+  res.send(paginaTicket("O que você precisa hoje?", secoes, CSS_INICIO));
 });

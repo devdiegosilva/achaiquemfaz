@@ -58,7 +58,7 @@ export interface Fornecedor {
   id: string;
   nome: string;
   categoria: string;
-  bairro: string;
+  bairro: string | null;
   cidade: string;
   whatsapp: string;
   status: "ativo" | "inativo" | "trial";

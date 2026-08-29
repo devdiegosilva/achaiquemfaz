@@ -4,7 +4,9 @@ create table if not exists fornecedores (
   id uuid primary key default gen_random_uuid(),
   nome text not null,
   categoria text not null,
-  bairro text not null,
+  -- Opcional: fornecedores importados em lote (indicação/trial) nem sempre têm bairro
+  -- conhecido. Um fornecedor sem bairro ainda aparece em buscas sem filtro de bairro.
+  bairro text,
   cidade text not null default 'João Pessoa',
   whatsapp text not null,
   email text,

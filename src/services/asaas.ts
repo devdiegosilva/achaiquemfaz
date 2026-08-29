@@ -6,10 +6,8 @@ const client = axios.create({
   headers: { access_token: env.asaasApiKey, "Content-Type": "application/json" },
 });
 
-function amanha(): string {
-  const data = new Date();
-  data.setDate(data.getDate() + 1);
-  return data.toISOString().slice(0, 10);
+function hoje(): string {
+  return new Date().toISOString().slice(0, 10);
 }
 
 function somenteDigitos(valor: string): string {
@@ -61,7 +59,7 @@ export async function criarCheckoutAssinatura(params: {
     },
     subscription: {
       cycle: "MONTHLY",
-      nextDueDate: amanha(),
+      nextDueDate: hoje(),
     },
   });
 

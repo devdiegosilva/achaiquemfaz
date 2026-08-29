@@ -3,7 +3,7 @@ import { paginaTicket } from "../services/html";
 
 export const inicioRouter = Router();
 
-const LINK_WHATSAPP_DEMANDANTE = "https://wa.me/message/SNFY4NCIHFQ5E1";
+const LINK_WHATSAPP_DEMANDANTE = "https://wa.me/message/JKSOPHFGSDGPB1";
 
 const CSS_INICIO = `
   .opcoes { display: grid; gap: 16px; margin-top: 32px; }

@@ -3,11 +3,12 @@ import { classificarDemanda } from "../services/ai";
 import {
   buscarFornecedoresDisponiveis,
   buscarCategoriasFornecedores,
+  buscarContextoPendenteDemandante,
+  salvarDemandante,
   registrarDemanda,
   registrarNotificacoes,
 } from "../services/supabase";
 import { enviarMensagemWhatsapp } from "../services/whatsapp";
-import { consumirPendente, salvarPendente } from "../services/conversationState";
 import { montarMensagemFornecedor } from "../services/mensagens";
 import { CATEGORIAS_BASE, type MensagemRecebida } from "../types";
 
@@ -35,8 +36,8 @@ webhookRouter.post("/whatsapp", async (req, res) => {
       return res.sendStatus(200);
     }
 
-    const pendente = consumirPendente(mensagem.telefone);
-    const mensagemCompleta = pendente ? `${pendente.mensagemOriginal}\n${mensagem.texto}` : mensagem.texto;
+    const contextoPendente = await buscarContextoPendenteDemandante(mensagem.telefone);
+    const mensagemCompleta = contextoPendente ? `${contextoPendente}\n${mensagem.texto}` : mensagem.texto;
 
     const categoriasCadastradas = await buscarCategoriasFornecedores();
     const categoriasParaIA = Array.from(new Set([...Object.keys(CATEGORIAS_BASE), ...categoriasCadastradas]));
@@ -44,7 +45,8 @@ webhookRouter.post("/whatsapp", async (req, res) => {
     const classificacao = await classificarDemanda(mensagemCompleta, categoriasParaIA);
 
     if (!classificacao.servicoDescrito) {
-      salvarPendente(mensagem.telefone, { mensagemOriginal: mensagemCompleta });
+      // Ainda esperando esclarecimento — guarda o contexto pra próxima mensagem (válido por 72h).
+      await salvarDemandante(mensagem.telefone, mensagem.nome, mensagemCompleta);
       await enviarMensagemWhatsapp(
         mensagem.telefone,
         classificacao.perguntaEsclarecimento ?? "Pode dar mais detalhes sobre o serviço que você precisa?"
@@ -53,6 +55,8 @@ webhookRouter.post("/whatsapp", async (req, res) => {
     }
 
     if (!classificacao.categoriaEncontrada) {
+      // Demanda resolvida (sem fornecedor disponível) — zera o contexto.
+      await salvarDemandante(mensagem.telefone, mensagem.nome, null);
       await enviarMensagemWhatsapp(
         mensagem.telefone,
         `No momento não encontramos prestadores de ${classificacao.servicoDescrito} disponíveis. Vamos avisar assim que tivermos.`
@@ -64,12 +68,17 @@ webhookRouter.post("/whatsapp", async (req, res) => {
     const fornecedores = await buscarFornecedoresDisponiveis(categoria, classificacao.bairro ?? undefined);
 
     if (fornecedores.length === 0) {
+      // Demanda resolvida (sem fornecedor disponível) — zera o contexto.
+      await salvarDemandante(mensagem.telefone, mensagem.nome, null);
       await enviarMensagemWhatsapp(
         mensagem.telefone,
         `No momento não encontramos prestadores de ${categoria} disponíveis. Vamos avisar assim que tivermos.`
       );
       return res.sendStatus(200);
     }
+
+    // Demanda resolvida com sucesso — zera o contexto.
+    await salvarDemandante(mensagem.telefone, mensagem.nome, null);
 
     const demandaId = await registrarDemanda({
       demandanteNome: mensagem.nome,

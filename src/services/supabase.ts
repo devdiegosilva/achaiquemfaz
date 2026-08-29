@@ -142,3 +142,37 @@ export async function desativarFornecedorPorAsaasCustomerId(asaasCustomerId: str
   if (error) throw error;
   return data !== null;
 }
+
+const JANELA_CONTEXTO_HORAS = 72;
+
+// Retorna a conversa em aberto com esse demandante (aguardando resposta a uma pergunta de
+// esclarecimento), desde que o último contato tenha sido há menos de JANELA_CONTEXTO_HORAS.
+// Passado esse prazo, ou se não houver contexto pendente, retorna null (trata como demanda nova).
+export async function buscarContextoPendenteDemandante(whatsapp: string): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("demandantes")
+    .select("contexto_pendente, atualizado_em")
+    .eq("whatsapp", whatsapp)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data || !data.contexto_pendente) return null;
+
+  const horasDesdeUltimoContato = (Date.now() - new Date(data.atualizado_em).getTime()) / (1000 * 60 * 60);
+  if (horasDesdeUltimoContato >= JANELA_CONTEXTO_HORAS) return null;
+
+  return data.contexto_pendente as string;
+}
+
+// Cria/atualiza o registro do demandante. contextoPendente deve ser null quando a demanda
+// foi resolvida (sucesso ou "não temos esse serviço"), ou o texto acumulado quando a IA
+// ainda está esperando uma resposta de esclarecimento.
+export async function salvarDemandante(whatsapp: string, nome: string | null, contextoPendente: string | null): Promise<void> {
+  const { error } = await supabase
+    .from("demandantes")
+    .upsert(
+      { whatsapp, nome, contexto_pendente: contextoPendente, atualizado_em: new Date().toISOString() },
+      { onConflict: "whatsapp" }
+    );
+  if (error) throw error;
+}

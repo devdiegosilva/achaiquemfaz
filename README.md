@@ -11,6 +11,7 @@ Agente que conecta demandantes e prestadores de serviço via WhatsApp, começand
 - Status `trial`: fornecedores cadastrados manualmente (indicação) recebem demandas de graça por 30 dias, com uma chamada para conhecer os planos na mensagem que recebem.
 - Categorias de serviço abertas: lista base de ~38 categorias + opção "Outro" no cadastro; a IA casa a demanda do cliente com as categorias realmente cadastradas (base + personalizadas).
 - Página inicial (`/`) funciona como um hub: separa quem precisa de um serviço (vai direto pro WhatsApp) de quem quer virar fornecedor (vai pra `/fornecedores`).
+- Memória de conversa por demandante (tabela `demandantes`): se a IA fizer uma pergunta de esclarecimento, a resposta pode vir em outra mensagem (até 72h depois) sem repetir o contexto. Some assim que a demanda é resolvida.
 
 **Marca e visual:** o produto se chama **Achaí Quem Faz** (antigo "Ache Fornecedores", renomeado em 2026-08-22 — repositório GitHub e domínio Railway já atualizados para bater com a nova marca). Landing page e `/cadastro` usam uma identidade visual de "ordem de serviço" (papel kraft, picote, linhas de corte, botões estilo carimbo), servida por `services/html.ts` (`paginaTicket`).
 
@@ -21,7 +22,7 @@ Agente que conecta demandantes e prestadores de serviço via WhatsApp, começand
 ## Fluxo
 
 1. Demandante manda mensagem no WhatsApp.
-2. IA (Claude) identifica a categoria do serviço; se ambíguo, faz uma pergunta curta de esclarecimento.
+2. IA (Claude) identifica a categoria do serviço; se ambíguo, faz uma pergunta curta de esclarecimento — a resposta pode chegar em uma mensagem separada, até 72h depois, sem perder o contexto (tabela `demandantes`).
 3. Sistema busca fornecedores disponíveis daquela categoria no Supabase (assinantes `ativo` e cadastros manuais em `trial`, estes últimos válidos por 30 dias).
 4. Envia a demanda (nome, bairro, contato do demandante) para os fornecedores compatíveis.
 5. Confirma ao demandante quais empresas foram avisadas.
@@ -47,7 +48,6 @@ src/
     ai.ts                 # classificação da demanda via Claude
     whatsapp.ts            # envio de mensagens via Evolution API
     supabase.ts            # consultas e gravações no banco
-    conversationState.ts   # estado em memória para perguntas de esclarecimento
     mensagens.ts            # variações de texto enviadas aos fornecedores
     asaas.ts                # criação de checkout de assinatura via Asaas
     html.ts                 # templates de página (paginaTicket = identidade "ordem de serviço")

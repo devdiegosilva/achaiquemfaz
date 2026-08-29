@@ -34,3 +34,16 @@ create table if not exists demandas_notificacoes (
   fornecedor_id uuid not null references fornecedores (id) on delete cascade,
   enviado_em timestamptz not null default now()
 );
+
+-- Guarda, por demandante (identificado pelo WhatsApp), uma conversa em aberto: a IA fez
+-- uma pergunta de esclarecimento e está esperando resposta. Zerado assim que a demanda é
+-- resolvida (fornecedor encontrado ou não). Se ninguém responder em 72h, o contexto expira
+-- e a próxima mensagem é tratada como uma demanda nova (ver services/supabase.ts).
+create table if not exists demandantes (
+  id uuid primary key default gen_random_uuid(),
+  whatsapp text not null unique,
+  nome text,
+  contexto_pendente text,
+  atualizado_em timestamptz not null default now(),
+  created_at timestamptz not null default now()
+);

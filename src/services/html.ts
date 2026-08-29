@@ -27,18 +27,7 @@ export function paginaTicket(titulo: string, secoes: string, cssExtra = ""): str
     --font-body: "Work Sans", system-ui, sans-serif;
     --font-mono: "IBM Plex Mono", "Courier New", monospace;
   }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --backdrop: #0d1310; --paper: #1a231d; --paper-alt: #212b23; --ink: #ece4cf; --ink-muted: #b4ac94;
-      --stamp: #ff8a63; --stamp-ink: #241208; --work: #7fd9ae; --line: #3a4a3f; --line-strong: #4a5c4e;
-      --shadow: rgba(0, 0, 0, 0.55);
-    }
-  }
-  :root[data-theme="dark"] {
-    --backdrop: #0d1310; --paper: #1a231d; --paper-alt: #212b23; --ink: #ece4cf; --ink-muted: #b4ac94;
-    --stamp: #ff8a63; --stamp-ink: #241208; --work: #7fd9ae; --line: #3a4a3f; --line-strong: #4a5c4e;
-    --shadow: rgba(0, 0, 0, 0.55);
-  }
+  /* Identidade fixa em creme/verde/coral — não muda com o tema escuro do sistema. */
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--backdrop); color: var(--ink); font-family: var(--font-body); line-height: 1.55; -webkit-font-smoothing: antialiased; }
   .oficina { min-height: 100vh; display: flex; justify-content: center; padding: clamp(20px, 5vw, 56px) 16px; }

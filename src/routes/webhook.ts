@@ -4,6 +4,7 @@ import {
   buscarFornecedoresDisponiveis,
   buscarCategoriasFornecedores,
   buscarContextoPendenteDemandante,
+  existeFornecedorComWhatsapp,
   salvarDemandante,
   registrarDemanda,
   registrarNotificacoes,
@@ -42,6 +43,13 @@ webhookRouter.post("/whatsapp", async (req, res) => {
   try {
     const mensagem = extrairMensagem(req.body);
     if (!mensagem) {
+      return res.sendStatus(200);
+    }
+
+    // Quem já é fornecedor cadastrado (qualquer status) não é tratado como demandante —
+    // provavelmente é uma resposta a um aviso nosso, e a conversa real acontece direto com
+    // quem pediu o serviço, fora do bot.
+    if (await existeFornecedorComWhatsapp(mensagem.telefone)) {
       return res.sendStatus(200);
     }
 

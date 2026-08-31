@@ -143,6 +143,20 @@ export async function desativarFornecedorPorAsaasCustomerId(asaasCustomerId: str
   return data !== null;
 }
 
+// Usado pra distinguir um fornecedor respondendo a um aviso nosso de um demandante novo —
+// não importa o status (ativo/inativo/trial), qualquer número já cadastrado como fornecedor
+// não deve ser tratado como se estivesse pedindo um serviço.
+export async function existeFornecedorComWhatsapp(whatsapp: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("fornecedores")
+    .select("id")
+    .eq("whatsapp", whatsapp)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data !== null;
+}
+
 const JANELA_CONTEXTO_HORAS = 72;
 
 // Retorna a conversa em aberto com esse demandante (aguardando resposta a uma pergunta de

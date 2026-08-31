@@ -14,6 +14,11 @@ import { CATEGORIAS_BASE, type MensagemRecebida } from "../types";
 
 export const webhookRouter = Router();
 
+// Quantas perguntas de esclarecimento seguidas a IA pode fazer antes de desistir. Protege
+// contra loop infinito quando o número do fornecedor é, na verdade, outro robô automático
+// (ex: um menu de atendimento que responde "não entendi" pra qualquer mensagem nossa).
+const LIMITE_ESCLARECIMENTOS = 3;
+
 function aguardar(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -53,6 +58,19 @@ webhookRouter.post("/whatsapp", async (req, res) => {
     const classificacao = await classificarDemanda(dialogoAtual, categoriasParaIA);
 
     if (!classificacao.servicoDescrito) {
+      const tentativasAnteriores = dialogoAnterior ? (dialogoAnterior.match(/Atendente:/g) ?? []).length : 0;
+
+      if (tentativasAnteriores >= LIMITE_ESCLARECIMENTOS) {
+        // Já perguntamos demais sem entender — desiste e zera o contexto, em vez de insistir
+        // pra sempre (evita loop infinito com um robô do outro lado, por exemplo).
+        await salvarDemandante(mensagem.telefone, mensagem.nome, null);
+        await enviarMensagemWhatsapp(
+          mensagem.telefone,
+          "Não consegui entender qual serviço você precisa. Se quiser tentar de novo, é só mandar outra mensagem descrevendo o que você precisa."
+        );
+        return res.sendStatus(200);
+      }
+
       // Ainda esperando esclarecimento — guarda o diálogo completo (incluindo a pergunta que
       // a própria IA está mandando agora) pra próxima mensagem levar em conta (válido por 72h).
       const pergunta = classificacao.perguntaEsclarecimento ?? "Pode dar mais detalhes sobre o serviço que você precisa?";

@@ -40,21 +40,24 @@ webhookRouter.post("/whatsapp", async (req, res) => {
       return res.sendStatus(200);
     }
 
-    const contextoPendente = await buscarContextoPendenteDemandante(mensagem.telefone);
-    const mensagemCompleta = contextoPendente ? `${contextoPendente}\n${mensagem.texto}` : mensagem.texto;
+    // Diálogo acumulado até aqui (os dois lados: cliente e atendente/IA), rotulado por
+    // linha pra IA não confundir uma pergunta nossa anterior com a descrição do problema.
+    const dialogoAnterior = await buscarContextoPendenteDemandante(mensagem.telefone);
+    const dialogoAtual = dialogoAnterior
+      ? `${dialogoAnterior}\nCliente: ${mensagem.texto}`
+      : `Cliente: ${mensagem.texto}`;
 
     const categoriasCadastradas = await buscarCategoriasFornecedores();
     const categoriasParaIA = Array.from(new Set([...Object.keys(CATEGORIAS_BASE), ...categoriasCadastradas]));
 
-    const classificacao = await classificarDemanda(mensagemCompleta, categoriasParaIA);
+    const classificacao = await classificarDemanda(dialogoAtual, categoriasParaIA);
 
     if (!classificacao.servicoDescrito) {
-      // Ainda esperando esclarecimento — guarda o contexto pra próxima mensagem (válido por 72h).
-      await salvarDemandante(mensagem.telefone, mensagem.nome, mensagemCompleta);
-      await enviarMensagemWhatsapp(
-        mensagem.telefone,
-        classificacao.perguntaEsclarecimento ?? "Pode dar mais detalhes sobre o serviço que você precisa?"
-      );
+      // Ainda esperando esclarecimento — guarda o diálogo completo (incluindo a pergunta que
+      // a própria IA está mandando agora) pra próxima mensagem levar em conta (válido por 72h).
+      const pergunta = classificacao.perguntaEsclarecimento ?? "Pode dar mais detalhes sobre o serviço que você precisa?";
+      await salvarDemandante(mensagem.telefone, mensagem.nome, `${dialogoAtual}\nAtendente: ${pergunta}`);
+      await enviarMensagemWhatsapp(mensagem.telefone, pergunta);
       return res.sendStatus(200);
     }
 
@@ -89,7 +92,7 @@ webhookRouter.post("/whatsapp", async (req, res) => {
       demandanteWhatsapp: mensagem.telefone,
       categoria,
       bairro: classificacao.bairro,
-      mensagemOriginal: mensagemCompleta,
+      mensagemOriginal: dialogoAtual,
     });
 
     const bairroTexto = classificacao.bairro ? ` no bairro ${classificacao.bairro}` : "";

@@ -21,8 +21,12 @@ export function montarMensagemFornecedor(
   telefoneDemandante: string,
   isTrial: boolean
 ): string {
+  // Exibe o contato do demandante com "+" antes do código do país (ex: +5583999999999) —
+  // internamente o número segue sem "+" (formato do JID do WhatsApp), só o texto exibido muda.
+  const telefoneFormatado = telefoneDemandante.startsWith("+") ? telefoneDemandante : `+${telefoneDemandante}`;
+
   const template = TEMPLATES_FORNECEDOR[Math.floor(Math.random() * TEMPLATES_FORNECEDOR.length)];
-  const mensagem = template(nomeDemandante, bairroTexto, telefoneDemandante);
+  const mensagem = template(nomeDemandante, bairroTexto, telefoneFormatado);
 
   if (!isTrial) return mensagem;
 

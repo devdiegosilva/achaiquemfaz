@@ -1,4 +1,5 @@
 import { Router } from "express";
+import axios from "axios";
 import { classificarDemanda } from "../services/ai";
 import {
   buscarFornecedoresDisponiveis,
@@ -145,7 +146,17 @@ webhookRouter.post("/whatsapp", async (req, res) => {
 
     return res.sendStatus(200);
   } catch (error) {
-    console.error("Erro ao processar webhook do WhatsApp:", error);
+    // Loga só status + corpo da resposta (nunca o objeto do axios inteiro): o objeto completo
+    // inclui os headers da requisição, e isso vazava nossa x-api-key da Anthropic nos logs.
+    if (axios.isAxiosError(error)) {
+      console.error(
+        "Erro ao processar webhook do WhatsApp:",
+        error.response?.status,
+        JSON.stringify(error.response?.data)
+      );
+    } else {
+      console.error("Erro ao processar webhook do WhatsApp:", error);
+    }
     return res.sendStatus(500);
   }
 });

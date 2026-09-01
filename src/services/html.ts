@@ -79,7 +79,10 @@ export function paginaTicket(titulo: string, secoes: string, cssExtra = ""): str
   .receipt-total { font-size: 1rem; text-transform: uppercase; letter-spacing: 0.04em; }
   .receipt-total .valor { font-family: var(--font-display); font-weight: 800; font-size: 2.1rem; letter-spacing: 0; text-transform: none; color: var(--stamp); }
   .receipt-total .valor small { font-family: var(--font-mono); font-size: 0.9rem; font-weight: 500; color: var(--ink-muted); }
-  footer.foot { display: flex; justify-content: space-between; align-items: center; padding: 18px clamp(20px, 6vw, 48px) 22px; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-muted); }
+  footer.foot { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; padding: 18px clamp(20px, 6vw, 48px) 22px; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-muted); }
+  footer.foot a { color: var(--work); text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+  footer.foot a:hover, footer.foot a:focus-visible { text-decoration: underline; text-underline-offset: 3px; }
+  footer.foot svg { flex-shrink: 0; }
   .msg { text-align: center; padding-top: clamp(48px, 12vw, 88px); padding-bottom: clamp(48px, 12vw, 88px); }
   @media (prefers-reduced-motion: reduce) { .stamp-btn { transition: none; } }
   ${cssExtra}
@@ -100,6 +103,14 @@ export function paginaTicket(titulo: string, secoes: string, cssExtra = ""): str
     <div class="perf" aria-hidden="true"></div>
     <footer class="foot">
       <span>Achaí Quem Faz</span>
+      <a href="https://instagram.com/achaiquemfaz" target="_blank" rel="noopener">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <rect x="2.5" y="2.5" width="19" height="19" rx="5" stroke="currentColor" stroke-width="1.8"/>
+          <circle cx="12" cy="12" r="4.3" stroke="currentColor" stroke-width="1.8"/>
+          <circle cx="17.6" cy="6.4" r="1.1" fill="currentColor"/>
+        </svg>
+        @achaiquemfaz
+      </a>
       <span>João Pessoa · PB</span>
     </footer>
   </main>

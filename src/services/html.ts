@@ -204,6 +204,9 @@ const CSS_SITE = `
   .site { min-height: 100vh; display: flex; flex-direction: column; background: var(--bg); color: var(--text); }
   .site a { color: var(--primary); text-decoration: none; }
   .site a:hover { text-decoration: underline; text-underline-offset: 2px; }
+  /* links estilizados como botão: a cor do texto vem do próprio botão, não do link */
+  .site a.btn-primary, .site a.btn-primary:hover { color: var(--on-primary); text-decoration: none; }
+  .site a.btn-ghost, .site a.btn-ghost:hover { color: var(--text); text-decoration: none; }
   .site h1, .site h2, .site h3 { font-family: var(--font-head); font-weight: 700; letter-spacing: -0.02em; text-wrap: balance; margin: 0; color: var(--text); }
   .site :focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 3px; }
   .site-main { flex: 1; width: 100%; max-width: 1180px; margin: 0 auto; }

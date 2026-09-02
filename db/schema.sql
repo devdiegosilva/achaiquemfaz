@@ -28,8 +28,11 @@ create table if not exists fornecedores (
   servicos text[] not null default '{}',
   -- Foco inicial do diretório: 'casa' e/ou 'condominio'.
   segmentos text[] not null default '{casa,condominio}',
-  -- Magic link de edição do próprio perfil (/diretorio/editar?token=...). Sem senha.
-  edit_token uuid not null default gen_random_uuid()
+  -- Magic link de edição do próprio perfil (/editar?token=...). Sem senha.
+  edit_token uuid not null default gen_random_uuid(),
+  -- Verificação manual: marcado no /admin quando a Achaí confirma o WhatsApp do
+  -- profissional (normalmente ao conseguir falar com ele pelo número cadastrado).
+  telefone_verificado boolean not null default false
 );
 
 create index if not exists idx_fornecedores_categoria on fornecedores (categoria);

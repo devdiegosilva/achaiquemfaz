@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { paginaSite, escaparHtml } from "../services/html";
-import { listarPerfisAdmin, definirPublicado } from "../services/supabase";
+import { listarPerfisAdmin, definirPublicado, definirVerificado } from "../services/supabase";
 import { env } from "../config/env";
 
 export const diretorioAdminRouter = Router();
@@ -16,7 +16,7 @@ const CSS_ADMIN = `
   .adminwrap h1 { font-family: var(--font-head); font-weight: 800; font-size: 1.6rem; margin: 0 0 4px; }
   .adminwrap .lead { color: var(--text-muted); font-size: 0.95rem; margin: 0 0 20px; }
   .adm { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--r-md); }
-  table.adm-t { border-collapse: collapse; width: 100%; font-size: 0.88rem; min-width: 760px; }
+  table.adm-t { border-collapse: collapse; width: 100%; font-size: 0.88rem; min-width: 900px; }
   table.adm-t th, table.adm-t td { border-bottom: 1px solid var(--border); padding: 10px 12px; text-align: left; vertical-align: top; }
   table.adm-t th { font-family: var(--font-mono); font-size: 0.68rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-subtle); background: var(--surface-2); }
   table.adm-t tbody tr:last-child td { border-bottom: none; }
@@ -25,6 +25,7 @@ const CSS_ADMIN = `
   .st { display: inline-block; font-family: var(--font-mono); font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.03em; padding: 3px 8px; border-radius: var(--r-pill); }
   .st.on { background: var(--success-weak); color: var(--success); border: 1px solid var(--success); }
   .st.off { border: 1px solid var(--border-strong); color: var(--text-subtle); }
+  .st.verif { background: var(--primary-weak); color: var(--primary); border: 1px solid var(--primary); }
   form.inline { display: inline; }
   form.inline button { font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase; padding: 5px 10px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text); cursor: pointer; border-radius: var(--r-sm); }
   form.inline button:hover { background: var(--surface-3); }
@@ -39,11 +40,21 @@ function render(perfis: Awaited<ReturnType<typeof listarPerfisAdmin>>, chave: st
     .map((p) => {
       const linkEdicao = `${env.backendPublicUrl}/editar?token=${p.edit_token}`;
       const convite = `Oi! O Achaí Quem Faz agora tem uma vitrine online de profissionais para casa e condomínio em João Pessoa. Quer que a gente publique seu perfil? É grátis. Confira e complete seus dados: ${linkEdicao}`;
+      const verif = Boolean(p.telefone_verificado);
       return `
       <tr>
         <td>${escaparHtml(p.nome)}<br /><span style="color:var(--text-subtle);font-size:0.8rem">${escaparHtml(p.categoria)}</span></td>
         <td style="font-family:var(--font-mono);font-size:0.8rem">${escaparHtml(p.whatsapp)}</td>
         <td>${p.publicado ? '<span class="st on">no ar</span>' : '<span class="st off">oculto</span>'}</td>
+        <td>
+          ${verif ? '<span class="st verif">verificado</span><br />' : ""}
+          <form class="inline" method="POST" action="/admin/verificar">
+            <input type="hidden" name="chave" value="${escaparHtml(chave)}" />
+            <input type="hidden" name="id" value="${escaparHtml(p.id)}" />
+            <input type="hidden" name="verificado" value="${verif ? "0" : "1"}" />
+            <button type="submit">${verif ? "Desmarcar" : "Marcar verificado"}</button>
+          </form>
+        </td>
         <td>
           <form class="inline" method="POST" action="/admin/publicar">
             <input type="hidden" name="chave" value="${escaparHtml(chave)}" />
@@ -59,14 +70,16 @@ function render(perfis: Awaited<ReturnType<typeof listarPerfisAdmin>>, chave: st
     })
     .join("");
 
+  const verificados = perfis.filter((p) => p.telefone_verificado).length;
+
   const secoes = `
     <div class="adminwrap">
       <h1>Painel do diretório</h1>
-      <p class="lead">${publicados} de ${total} ${total === 1 ? "perfil" : "perfis"} no ar. O link de edição de cada profissional é pessoal — envie só para ele.</p>
+      <p class="lead">${publicados} de ${total} ${total === 1 ? "perfil" : "perfis"} no ar · ${verificados} com telefone verificado. Marque "verificado" quando conseguir falar com o profissional pelo número cadastrado.</p>
       <div class="adm">
         <table class="adm-t">
           <thead>
-            <tr><th>Nome</th><th>WhatsApp</th><th>Status</th><th>Ação</th><th>Link de edição</th><th>Mensagem de convite</th></tr>
+            <tr><th>Nome</th><th>WhatsApp</th><th>Status</th><th>Telefone</th><th>Publicação</th><th>Link de edição</th><th>Mensagem de convite</th></tr>
           </thead>
           <tbody>${linhas}</tbody>
         </table>
@@ -98,5 +111,17 @@ diretorioAdminRouter.post("/publicar", async (req, res) => {
   if (!id) return res.redirect(303, `/admin?chave=${encodeURIComponent(chave)}`);
 
   await definirPublicado(id, publicado).catch((erro) => console.error("Erro ao alterar publicado:", erro));
+  res.redirect(303, `/admin?chave=${encodeURIComponent(chave)}`);
+});
+
+diretorioAdminRouter.post("/verificar", async (req, res) => {
+  const chave = typeof req.body?.chave === "string" ? req.body.chave : "";
+  if (!chaveValida(chave)) return res.sendStatus(404);
+
+  const id = typeof req.body?.id === "string" ? req.body.id : "";
+  const verificado = req.body?.verificado === "1";
+  if (!id) return res.redirect(303, `/admin?chave=${encodeURIComponent(chave)}`);
+
+  await definirVerificado(id, verificado).catch((erro) => console.error("Erro ao alterar verificado:", erro));
   res.redirect(303, `/admin?chave=${encodeURIComponent(chave)}`);
 });

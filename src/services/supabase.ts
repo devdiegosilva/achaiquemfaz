@@ -199,7 +199,7 @@ export async function salvarDemandante(whatsapp: string, nome: string | null, co
 // ===========================================================================
 
 const CAMPOS_PERFIL =
-  "id, nome, categoria, servicos, bairro, cidade, whatsapp, descricao, segmentos, slug, publicado, status, created_at";
+  "id, nome, categoria, servicos, bairro, cidade, whatsapp, descricao, segmentos, slug, publicado, telefone_verificado, status, created_at";
 
 export interface FiltrosDiretorio {
   categoria?: string;
@@ -371,5 +371,10 @@ export async function listarPerfisAdmin(): Promise<PerfilAdmin[]> {
 
 export async function definirPublicado(id: string, publicado: boolean): Promise<void> {
   const { error } = await supabase.from("fornecedores").update({ publicado }).eq("id", id);
+  if (error) throw error;
+}
+
+export async function definirVerificado(id: string, verificado: boolean): Promise<void> {
+  const { error } = await supabase.from("fornecedores").update({ telefone_verificado: verificado }).eq("id", id);
   if (error) throw error;
 }

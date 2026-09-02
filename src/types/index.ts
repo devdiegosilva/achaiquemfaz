@@ -190,6 +190,7 @@ export interface PerfilDiretorio {
   segmentos: string[];
   slug: string;
   publicado: boolean;
+  telefone_verificado?: boolean;
   status: "ativo" | "inativo" | "trial";
   created_at?: string;
 }

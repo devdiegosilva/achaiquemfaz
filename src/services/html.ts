@@ -314,6 +314,10 @@ const CSS_SITE = `
   .pcard .dsc { font-size: 0.87rem; color: var(--text-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .pcard .tags { display: flex; gap: 5px; flex-wrap: wrap; }
   .tag { font-family: var(--font-mono); font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.03em; color: var(--text-muted); background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-pill); padding: 2px 8px; }
+  .tag.tag-verif { display: inline-flex; align-items: center; gap: 4px; color: var(--primary); background: var(--primary-weak); border-color: var(--primary); font-weight: 600; }
+  .tag.tag-verif svg { width: 10px; height: 10px; }
+  .selo-verif { display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-mono); font-size: 0.7rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; color: var(--primary); background: var(--primary-weak); border: 1px solid var(--primary); border-radius: var(--r-pill); padding: 3px 10px; }
+  .selo-verif svg { width: 12px; height: 12px; }
   .pcard .btn { margin-top: auto; position: relative; z-index: 1; }
 
   .pager { display: flex; justify-content: center; gap: 6px; margin-top: 26px; }
@@ -335,6 +339,7 @@ const CSS_SITE = `
   .pdp { display: grid; grid-template-columns: 1fr 350px; gap: 38px; padding: 22px clamp(16px, 4vw, 32px) 40px; }
   .pdp-main { min-width: 0; }
   .pdp-id { display: flex; gap: 18px; align-items: center; }
+  .pdp-id .selo-verif { margin-top: 9px; }
   .pdp h1 { font-size: clamp(1.7rem, 4vw, 2.2rem); font-weight: 800; margin: 4px 0 0; }
   .pdp .meta { display: flex; gap: 8px 18px; flex-wrap: wrap; font-size: 0.86rem; color: var(--text-muted); font-family: var(--font-mono); margin-top: 14px; }
   .pdp-sec { border-top: 1px solid var(--border); margin-top: 26px; padding-top: 22px; }

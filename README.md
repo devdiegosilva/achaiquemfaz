@@ -81,18 +81,24 @@ Servido por `paginaSite` / `CSS_SITE` em `services/html.ts`, independente da ide
   publicação — LGPD, já que eles foram importados, não se cadastraram). Toggle publicar/
   ocultar por linha.
 
-**Banco:** a tabela `fornecedores` ganhou colunas nullable (`publicado`, `slug`,
-`descricao`, `servicos text[]`, `segmentos text[]`, `edit_token uuid`). Visibilidade no
-diretório = `publicado = true`, **independente** de `status`/`trial` (que seguem
-controlando só o disparo no WhatsApp). Um cadastro feito pelo diretório entra como
-`status = 'inativo'`. Migração `db/migracao_diretorio.sql` já rodada no Supabase em
-2026-09-02 (idempotente; fez o backfill de `slug` e `edit_token` dos registros existentes).
+**Banco:** a tabela `fornecedores` ganhou colunas (`publicado`, `slug`, `descricao`,
+`servicos text[]`, `segmentos text[]`, `edit_token uuid`, `telefone_verificado boolean`).
+Visibilidade no diretório = `publicado = true`, **independente** de `status`/`trial` (que
+seguem controlando só o disparo no WhatsApp). Um cadastro feito pelo diretório entra como
+`status = 'inativo'`. Migrações em `db/`: `migracao_diretorio.sql` (rodada 2026-09-02) e
+`migracao_verificacao.sql` (`telefone_verificado`).
+
+**Verificação de telefone (opção manual):** `telefone_verificado` é marcado no `/admin`
+quando a Achaí consegue falar com o profissional pelo número cadastrado (normalmente ao
+mandar o magic link). Quando `true`, aparece um selo "Contato verificado" no perfil e nos
+cards da busca. Verificação automática (OTP) fica para quando o dashboard com login for
+construído.
 
 **Ainda pendente no diretório** (nesta ordem, combinado em 2026-09-02):
 1. Avaliações / estrelas (schema novo, quem pode avaliar, moderação).
-2. Selo "verificado" (coluna nova + marcação manual no admin).
-3. Dashboard do profissional (exige login/autenticação — não existe hoje).
-4. Caminho pago: quando `DIRETORIO_EXIGE_ASSINATURA=true`, o cadastro entra despublicado
+2. Dashboard do profissional (exige login/autenticação — não existe hoje). O login por
+   telefone + OTP já resolve a verificação automática do número de brinde.
+3. Caminho pago: quando `DIRETORIO_EXIGE_ASSINATURA=true`, o cadastro entra despublicado
    e ainda **não há checkout** ligado.
 
 Outros itens menores: envio automático do magic link por e-mail/WhatsApp (hoje é manual,
@@ -144,7 +150,8 @@ src/
   types/index.ts            # tipos, categorias (base + casa/condomínio), lista de bairros de João Pessoa
 db/
   schema.sql               # schema completo das tabelas
-  migracao_diretorio.sql   # migração aditiva do módulo diretório (já aplicada em 2026-09-02)
+  migracao_diretorio.sql   # migração aditiva do módulo diretório (aplicada em 2026-09-02)
+  migracao_verificacao.sql # coluna telefone_verificado
 ```
 
 ## Setup local
@@ -165,9 +172,10 @@ npm run dev
 
 ## Próximos passos
 
-1. **Piloto**: publicar 10-15 profissionais reais pelo `/diretorio/admin` e observar o uso.
-2. Depois do piloto, **nesta ordem**: avaliações/estrelas → selo "verificado" (manual) →
-   dashboard do profissional (precisa de login/auth) → caminho pago
+1. **Piloto**: publicar 10-15 profissionais reais pelo `/admin`, marcar `telefone_verificado`
+   nos que você conseguir falar, e observar o uso.
+2. Depois do piloto, **nesta ordem**: avaliações/estrelas → dashboard do profissional
+   (login por telefone/OTP, que já traz a verificação automática) → caminho pago
    (`DIRETORIO_EXIGE_ASSINATURA` + checkout).
 3. Automatizar o envio do magic link (hoje é copia-e-cola pelo admin); fotos de perfil.
 4. Resolver o domínio sem `www` (`achaiquemfaz.com.br`), hoje sem registro DNS.

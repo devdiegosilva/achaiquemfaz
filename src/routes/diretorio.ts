@@ -48,6 +48,8 @@ function str(v: unknown): string {
 const ICONE_WA = `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 00-8.6 15l-1.3 4.7 4.8-1.3A10 10 0 1012 2zm0 2a8 8 0 11-4.2 14.8l-.3-.2-2.8.8.8-2.8-.2-.3A8 8 0 0112 4zm4.6 10.3c-.2-.1-1.4-.7-1.6-.8-.2-.1-.4-.1-.5.1l-.7.9c-.1.2-.3.2-.5.1a6.5 6.5 0 01-3.2-2.8c-.1-.2 0-.4.1-.5l.4-.5c.1-.2.1-.3 0-.5l-.7-1.7c-.2-.4-.4-.4-.5-.4h-.5c-.2 0-.4.1-.6.3-.7.7-.9 1.7-.6 2.7.5 1.7 1.6 3.1 3.1 4.1 1 .7 2.2 1.1 3.4 1.1.9 0 1.7-.4 2.2-1 .2-.3.3-.7.2-1z"/></svg>`;
 const ICONE_LUPA = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>`;
 const ICONE_PIN = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s7-6.2 7-11a7 7 0 10-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>`;
+const ICONE_CHECK = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5"/></svg>`;
+const SELO_VERIFICADO = `<span class="selo-verif" title="A Achaí Quem Faz confirmou o WhatsApp deste profissional">${ICONE_CHECK} Contato verificado</span>`;
 
 // Ordem dos cards de categoria na home + emoji de cada uma.
 const HOME_CATS = [
@@ -238,7 +240,12 @@ diretorioRouter.get("/busca", async (req, res) => {
 
   const cards = perfis
     .map((p) => {
-      const tags = (p.segmentos ?? []).map((s) => `<span class="tag">${escaparHtml(rotuloSegmento(s))}</span>`).join("");
+      const tags = [
+        p.telefone_verificado ? `<span class="tag tag-verif">${ICONE_CHECK} Verificado</span>` : "",
+        ...(p.segmentos ?? []).map((s) => `<span class="tag">${escaparHtml(rotuloSegmento(s))}</span>`),
+      ]
+        .filter(Boolean)
+        .join("");
       return `
       <article class="pcard">
         <a class="card-link" href="/p/${escaparHtml(p.slug)}">Ver perfil de ${escaparHtml(p.nome)}</a>
@@ -349,6 +356,7 @@ diretorioRouter.get("/p/:slug", async (req, res) => {
           <div>
             <span class="eyebrow">${escaparHtml(rotuloCategoria(perfil.categoria))}</span>
             <h1>${escaparHtml(perfil.nome)}</h1>
+            ${perfil.telefone_verificado ? SELO_VERIFICADO : ""}
           </div>
         </div>
         <div class="meta">${meta}</div>
@@ -381,6 +389,7 @@ diretorioRouter.get("/p/:slug", async (req, res) => {
         <div class="nm">${escaparHtml(perfil.nome)}</div>
         <div class="sb">${escaparHtml(rotuloCategoria(perfil.categoria))}${perfil.bairro ? ` · ${escaparHtml(perfil.bairro === "João Pessoa" ? "cidade toda" : perfil.bairro)}` : ""}</div>
         <a class="btn btn-primary btn-block btn-lg" href="${escaparHtml(wa)}" target="_blank" rel="noopener">${ICONE_WA} Chamar no WhatsApp</a>
+        ${perfil.telefone_verificado ? `<p style="margin-top:12px">${SELO_VERIFICADO}</p>` : ""}
         <p class="note">A Achaí Quem Faz não intermedia pagamento nem execução do serviço. Combine tudo direto com o profissional.</p>
         <a class="rep" href="https://instagram.com/achaiquemfaz" target="_blank" rel="noopener">Algo errado neste perfil?</a>
       </aside>

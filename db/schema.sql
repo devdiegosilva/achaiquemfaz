@@ -14,11 +14,28 @@ create table if not exists fornecedores (
   status text not null default 'inativo' check (status in ('ativo', 'inativo', 'trial')),
   asaas_customer_id text,
   asaas_checkout_id text,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+
+  -- Diretório público (/diretorio) — módulo em paralelo ao fluxo do WhatsApp.
+  -- Um fornecedor só aparece no diretório quando publicado = true (opt-in explícito
+  -- do prestador, exigência de LGPD). É independente de status/trial: um cadastro
+  -- feito pelo diretório entra como status = 'inativo' (não recebe disparo no
+  -- WhatsApp) e publicado conforme a escolha dele.
+  publicado boolean not null default false,
+  slug text unique,
+  descricao text,
+  -- Serviços oferecidos, além da categoria principal (buscáveis no diretório).
+  servicos text[] not null default '{}',
+  -- Foco inicial do diretório: 'casa' e/ou 'condominio'.
+  segmentos text[] not null default '{casa,condominio}',
+  -- Magic link de edição do próprio perfil (/diretorio/editar?token=...). Sem senha.
+  edit_token uuid not null default gen_random_uuid()
 );
 
 create index if not exists idx_fornecedores_categoria on fornecedores (categoria);
 create index if not exists idx_fornecedores_status on fornecedores (status);
+create index if not exists idx_fornecedores_publicado on fornecedores (publicado);
+create unique index if not exists idx_fornecedores_edit_token on fornecedores (edit_token);
 
 create table if not exists demandas (
   id uuid primary key default gen_random_uuid(),

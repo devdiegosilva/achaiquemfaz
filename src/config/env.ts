@@ -21,4 +21,10 @@ export const env = {
   asaasApiKey: required("ASAAS_API_KEY"),
   asaasWebhookToken: required("ASAAS_WEBHOOK_TOKEN"),
   assinaturaValorMensal: Number(process.env.ASSINATURA_VALOR_MENSAL ?? 97.9),
+
+  // Diretório (/diretorio). Enquanto false, o cadastro no diretório é gratuito
+  // (sem checkout Asaas) — pensado para o período de lançamento / cold start.
+  diretorioExigeAssinatura: (process.env.DIRETORIO_EXIGE_ASSINATURA ?? "false") === "true",
+  // Chave de acesso ao painel /diretorio/admin. Se vazia, o painel fica indisponível.
+  adminChave: process.env.ADMIN_CHAVE ?? "",
 };

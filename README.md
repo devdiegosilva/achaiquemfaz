@@ -1,8 +1,27 @@
 # Achaí Quem Faz
 
-Agente que conecta demandantes e prestadores de serviço via WhatsApp, começando em João Pessoa/PB.
+Conecta quem precisa de um serviço para casa ou condomínio a profissionais e empresas
+da região, em João Pessoa/PB.
 
-## Status atual (atualizado em 2026-08-31)
+O projeto tem **duas frentes** hoje:
+
+1. **Diretório (`/diretorio`)** — a direção atual do produto. Vitrine pública de
+   profissionais no modelo marketplace; o cliente busca, abre o perfil e fala direto
+   no WhatsApp do profissional. Sem bot, sem Evolution API, sem depender da Meta.
+   **Pronto para piloto** (ver seção "Diretório" abaixo).
+2. **Fluxo WhatsApp (`/`, `/fornecedores`, `/cadastro`, webhooks)** — o produto
+   original: um agente que recebe a demanda por WhatsApp, classifica via IA e dispara
+   para fornecedores. Continua no ar em paralelo; será **desligado** quando o diretório
+   se provar (aí `/` passa a apontar para o diretório e a rota do webhook é removida).
+
+O pivô (2026-09-02) foi motivado pela fragilidade dupla do fluxo WhatsApp: o número
+Evolution API (não-oficial) pode ser banido sem aviso, e a verificação Meta Business
+está travada em burocracia fora do controle do time.
+
+## Status atual (atualizado em 2026-09-02)
+
+> As seções abaixo até "Fluxo" descrevem o **fluxo WhatsApp** (produto original). O
+> diretório tem seção própria mais adiante.
 
 **No ar e testado ponta a ponta:**
 - WhatsApp conectado (Evolution API, hospedada na Railway) → backend (Railway) → classificação da demanda via Claude → busca de fornecedor no Supabase → notificação ao fornecedor e confirmação ao demandante.
@@ -28,45 +47,56 @@ Agente que conecta demandantes e prestadores de serviço via WhatsApp, começand
 - Domínio sem `www` (`achaiquemfaz.com.br`) — CNAME na raiz é rejeitado pelo Registro.br em modo avançado; resolver isso no modo básico exigiria remover os registros TXT de verificação da Railway, então foi adiado. Por enquanto, use sempre `www.achaiquemfaz.com.br`.
 - Deduplicação de mensagens recebidas do WhatsApp (a Evolution API às vezes entrega a mesma mensagem mais de uma vez, gerando respostas repetidas) — identificado, correção ainda pendente.
 
-## Diretório (`/diretorio`) — módulo em paralelo (em construção)
+## Diretório (`/diretorio`)
 
-Alternativa ao disparo automático no WhatsApp: uma **vitrine pública** de prestadores,
-no modelo marketplace (tipo GetNinjas/Triider), com foco inicial em **casa e condomínio**
-em João Pessoa. O cliente busca, abre o perfil e fala **direto** com o prestador por um
-link `wa.me` — sem bot, sem Evolution API, sem depender de aprovação da Meta.
+Vitrine pública de profissionais no modelo marketplace (tipo GetNinjas/Triider), com
+foco inicial em **casa e condomínio** em João Pessoa. O cliente busca por serviço e
+bairro, abre o perfil e fala **direto** no WhatsApp do profissional (`wa.me`) — sem bot,
+sem Evolution API, sem aprovação da Meta.
 
 Roda no mesmo backend/deploy, montado em `/diretorio`, **sem tocar no fluxo do WhatsApp**.
-A ideia é manter os dois no ar até o diretório estar validado; na virada, aponta-se `/`
-para o diretório e remove-se a rota do webhook.
 
-Visual: design system próprio (base branca SaaS, verde primário, coral em detalhe;
-Bricolage Grotesque + Work Sans + IBM Plex Mono), servido por `paginaSite` em
-`services/html.ts` (`CSS_SITE`). Independente da identidade "ordem de serviço" do
-fluxo WhatsApp (`paginaTicket`).
+**Visual:** design system próprio — base branca SaaS, verde `#15654a` primário, coral só
+em detalhe; Bricolage Grotesque (títulos) + Work Sans (texto) + IBM Plex Mono (labels).
+Servido por `paginaSite` / `CSS_SITE` em `services/html.ts`, independente da identidade
+"ordem de serviço" do fluxo WhatsApp (`paginaTicket`). Tema único claro. Mobile-first.
 
 **Rotas:**
-- `GET /diretorio` — home (hero + busca "O que? / Onde?" + categorias + como funciona).
-- `GET /diretorio/busca` — resultados (filtro por serviço, bairro e tipo casa/condomínio).
-- `GET /diretorio/p/:slug` — perfil público + botão "Chamar no WhatsApp".
-- `GET|POST /diretorio/cadastro` — auto-cadastro do prestador. Enquanto
-  `DIRETORIO_EXIGE_ASSINATURA=false`, é gratuito e o perfil já entra publicado; a tela
-  de sucesso mostra o **magic link** de edição para o prestador guardar.
-- `GET|POST /diretorio/editar?token=…` — o prestador edita o próprio perfil (descrição,
-  serviços, bairro, segmentos) e liga/desliga a publicação. Sem senha, só o token.
+- `GET /diretorio` — home: hero, busca "O que? / Onde?", cards de categoria, "como funciona".
+- `GET /diretorio/busca` — resultados: barra de busca serviço+bairro, filtros laterais
+  (Serviço / Bairro / Atende) — gaveta no celular —, ordenação, empty state com sugestões.
+- `GET /diretorio/p/:slug` — perfil público (Sobre, Serviços, Área de atendimento,
+  Como funciona) + caixa de contato fixa; no celular, CTA "Chamar no WhatsApp" fixo na base.
+- `GET|POST /diretorio/cadastro` — auto-cadastro do profissional em **5 etapas** (Dados ·
+  Serviços · Localização · Sobre · Confirmar), com barra de progresso; uma página, um POST,
+  degrada para formulário único sem JS. Serviço principal tem opção "Outro" (texto livre).
+  Bairro é lista fechada dos bairros de João Pessoa (`BAIRROS_JOAO_PESSOA` em `types`) +
+  opção "João Pessoa — cidade toda"; quem escolhe "cidade toda" aparece em qualquer busca
+  por bairro. Enquanto `DIRETORIO_EXIGE_ASSINATURA=false`, é gratuito e o perfil já entra
+  publicado; a tela de sucesso mostra o **magic link** de edição para o profissional guardar.
+- `GET|POST /diretorio/editar?token=…` — o profissional edita o próprio perfil e liga/
+  desliga a publicação. Sem senha, só o `edit_token`.
 - `GET /diretorio/admin?chave=…` — painel gated por `ADMIN_CHAVE`. Lista todos os perfis
   com o magic link e uma mensagem de convite pronta para enviar aos ~150 já cadastrados
-  (opt-in de publicação — exigência de LGPD, já que eles foram importados, não se cadastraram).
+  (opt-in de publicação — LGPD, já que eles foram importados, não se cadastraram). Toggle
+  publicar/ocultar por linha.
 
 **Banco:** a tabela `fornecedores` ganhou colunas nullable (`publicado`, `slug`,
-`descricao`, `servicos[]`, `segmentos[]`, `edit_token`). Visibilidade no diretório =
-`publicado = true`, **independente** de `status`/`trial` (que seguem controlando só o
-disparo no WhatsApp). Um cadastro feito pelo diretório entra como `status = 'inativo'`.
-Rodar `db/migracao_diretorio.sql` no SQL editor do Supabase (idempotente; faz o backfill
-de `slug` e `edit_token` dos registros existentes).
+`descricao`, `servicos text[]`, `segmentos text[]`, `edit_token uuid`). Visibilidade no
+diretório = `publicado = true`, **independente** de `status`/`trial` (que seguem
+controlando só o disparo no WhatsApp). Um cadastro feito pelo diretório entra como
+`status = 'inativo'`. Migração `db/migracao_diretorio.sql` já rodada no Supabase em
+2026-09-02 (idempotente; fez o backfill de `slug` e `edit_token` dos registros existentes).
 
-**Ainda pendente no diretório:** caminho pago (quando `DIRETORIO_EXIGE_ASSINATURA=true`,
-hoje o cadastro entra despublicado e não há checkout); envio automático do magic link por
-e-mail/WhatsApp (hoje é manual, via painel admin); fotos de perfil.
+**Ainda pendente no diretório** (nesta ordem, combinado em 2026-09-02):
+1. Avaliações / estrelas (schema novo, quem pode avaliar, moderação).
+2. Selo "verificado" (coluna nova + marcação manual no admin).
+3. Dashboard do profissional (exige login/autenticação — não existe hoje).
+4. Caminho pago: quando `DIRETORIO_EXIGE_ASSINATURA=true`, o cadastro entra despublicado
+   e ainda **não há checkout** ligado.
+
+Outros itens menores: envio automático do magic link por e-mail/WhatsApp (hoje é manual,
+pelo admin); fotos de perfil (hoje é monograma de iniciais).
 
 ## Fluxo
 
@@ -92,22 +122,30 @@ Cadastro e ativação de fornecedores acontecem em `/cadastro` (formulário + ch
 
 ```
 src/
-  config/env.ts          # carregamento e validação de variáveis de ambiente
+  config/env.ts             # carregamento e validação de variáveis de ambiente
   services/
-    ai.ts                 # classificação da demanda via Claude
-    whatsapp.ts            # envio de mensagens via Evolution API
-    supabase.ts            # consultas e gravações no banco
-    mensagens.ts            # variações de texto enviadas aos fornecedores
-    asaas.ts                # criação de checkout de assinatura via Asaas
-    html.ts                 # templates de página (paginaTicket = identidade "ordem de serviço")
+    ai.ts                   # [WhatsApp] classificação da demanda via Claude
+    whatsapp.ts             # [WhatsApp] envio de mensagens via Evolution API
+    mensagens.ts            # [WhatsApp] variações de texto enviadas aos fornecedores
+    asaas.ts                # [WhatsApp] criação de checkout de assinatura via Asaas
+    supabase.ts             # consultas e gravações no banco (WhatsApp + diretório)
+    html.ts                 # paginaTicket (identidade "ordem de serviço") + paginaSite/CSS_SITE (diretório)
+    slug.ts                 # [diretório] gera slug de URL a partir do nome
+    diretorioCampos.ts      # [diretório] CSS dos formulários + helpers (campoCategoria, campoBairro, ...)
   routes/
-    webhook.ts             # recebe mensagens do WhatsApp e orquestra o fluxo
-    inicio.ts               # página inicial (/) — escolha entre demandante e fornecedor
-    landing.ts              # landing page de apresentação para fornecedores (/fornecedores)
-    cadastro.ts             # formulário de cadastro de fornecedor + checkout
-    webhookPagamento.ts      # confirma pagamento e ativa o fornecedor
-  types/index.ts          # tipos e lista base de categorias de serviço (aberta a "outro")
-db/schema.sql             # schema das tabelas (fornecedores, demandas, demandas_notificacoes)
+    webhook.ts              # [WhatsApp] recebe mensagens e orquestra o fluxo
+    webhookPagamento.ts     # [WhatsApp] confirma pagamento e ativa o fornecedor
+    inicio.ts               # [WhatsApp] página inicial (/) — escolha entre demandante e fornecedor
+    landing.ts              # [WhatsApp] landing para fornecedores (/fornecedores)
+    cadastro.ts             # [WhatsApp] formulário de cadastro de fornecedor + checkout
+    diretorio.ts            # [diretório] home (/diretorio), busca (/diretorio/busca), perfil (/p/:slug)
+    diretorioCadastro.ts    # [diretório] auto-cadastro em 5 etapas
+    diretorioEditar.ts      # [diretório] edição de perfil via magic link
+    diretorioAdmin.ts       # [diretório] painel gated por ADMIN_CHAVE
+  types/index.ts            # tipos, categorias (base + casa/condomínio), lista de bairros de João Pessoa
+db/
+  schema.sql               # schema completo das tabelas
+  migracao_diretorio.sql   # migração aditiva do módulo diretório (já aplicada em 2026-09-02)
 ```
 
 ## Setup local
@@ -123,11 +161,17 @@ npm install
 npm run dev
 ```
 
-## Próximos passos sugeridos
+## Próximos passos
 
-- **Diretório**: validar a busca com 10-15 prestadores reais publicados; decidir se/quando ligar `DIRETORIO_EXIGE_ASSINATURA` e construir o checkout do diretório; automatizar o envio do magic link.
-- Concluir migração Evolution API → WhatsApp Cloud API oficial (cadastro de desenvolvedor na Meta em andamento).
-- Deduplicar mensagens recebidas do webhook do WhatsApp (Evolution API às vezes entrega a mesma mensagem mais de uma vez).
-- Painel simples para o fornecedor gerenciar status (ativo/inativo) e ver demandas recebidas.
+**Diretório (foco atual):**
+1. Piloto: publicar 10-15 profissionais reais pelo `/diretorio/admin` e observar o uso.
+2. Depois do piloto, na ordem: avaliações/estrelas → selo "verificado" → dashboard do
+   profissional (com login) → caminho pago (`DIRETORIO_EXIGE_ASSINATURA` + checkout).
+3. Automatizar o envio do magic link; fotos de perfil.
+4. Quando o diretório se provar: apontar `/` para `/diretorio` e remover a rota do webhook.
+
+**Fluxo WhatsApp (manutenção até a virada):**
+- Concluir migração Evolution API → WhatsApp Cloud API oficial (cadastro na Meta em andamento).
+- Deduplicar mensagens recebidas do webhook (Evolution API às vezes entrega a mesma duas vezes).
 - Resolver o domínio sem `www` (`achaiquemfaz.com.br`), hoje sem registro DNS.
 - Migrar de Asaas para Pagar.me assim que o CNPJ estiver pronto.

@@ -3,25 +3,25 @@
 Conecta quem precisa de um serviço para casa ou condomínio a profissionais e empresas
 da região, em João Pessoa/PB.
 
-O projeto tem **duas frentes** hoje:
+**O produto é o Diretório (`/diretorio`)** — vitrine pública de profissionais no modelo
+marketplace; o cliente busca por serviço e bairro, abre o perfil e fala direto no
+WhatsApp do profissional. Sem bot, sem Evolution API, sem depender da Meta.
 
-1. **Diretório (`/diretorio`)** — a direção atual do produto. Vitrine pública de
-   profissionais no modelo marketplace; o cliente busca, abre o perfil e fala direto
-   no WhatsApp do profissional. Sem bot, sem Evolution API, sem depender da Meta.
-   **Pronto para piloto** (ver seção "Diretório" abaixo).
-2. **Fluxo WhatsApp (`/`, `/fornecedores`, `/cadastro`, webhooks)** — o produto
-   original: um agente que recebe a demanda por WhatsApp, classifica via IA e dispara
-   para fornecedores. Continua no ar em paralelo; será **desligado** quando o diretório
-   se provar (aí `/` passa a apontar para o diretório e a rota do webhook é removida).
-
-O pivô (2026-09-02) foi motivado pela fragilidade dupla do fluxo WhatsApp: o número
-Evolution API (não-oficial) pode ser banido sem aviso, e a verificação Meta Business
-está travada em burocracia fora do controle do time.
+**O fluxo WhatsApp original foi desativado em 2026-09-02.** Era um agente que recebia a
+demanda por WhatsApp, classificava via IA e disparava para fornecedores. O pivô foi
+motivado pela fragilidade dupla: o número Evolution API (não-oficial) podia ser banido
+sem aviso, e a verificação Meta Business estava travada em burocracia fora do controle
+do time. Os arquivos continuam no repo (`routes/webhook.ts`, `webhookPagamento.ts`,
+`cadastro.ts`, `landing.ts`, `inicio.ts`; `services/ai.ts`, `whatsapp.ts`, `mensagens.ts`,
+`asaas.ts`), apenas **não montados** — `/`, `/fornecedores` e `/cadastro` redirecionam
+para o diretório. Para reativar: remontar os routers em `src/index.ts` e devolver as
+variáveis de ambiente a `required(...)` em `src/config/env.ts`.
 
 ## Status atual (atualizado em 2026-09-02)
 
-> As seções abaixo até "Fluxo" descrevem o **fluxo WhatsApp** (produto original). O
-> diretório tem seção própria mais adiante.
+> ⚠️ As seções abaixo até "Fluxo" descrevem o **fluxo WhatsApp original, DESATIVADO em
+> 2026-09-02**. Mantidas como referência histórica / caso de reativação. O produto atual
+> é o **Diretório** — seção própria mais adiante.
 
 **No ar e testado ponta a ponta:**
 - WhatsApp conectado (Evolution API, hospedada na Railway) → backend (Railway) → classificação da demanda via Claude → busca de fornecedor no Supabase → notificação ao fornecedor e confirmação ao demandante.
@@ -112,11 +112,10 @@ Cadastro e ativação de fornecedores acontecem em `/cadastro` (formulário + ch
 
 ## Stack
 
-- **Backend**: Node.js + TypeScript + Express
+- **Backend**: Node.js + TypeScript + Express, hospedado na Railway
 - **Banco**: Supabase (Postgres)
-- **IA**: Claude (Anthropic API)
-- **WhatsApp**: Evolution API (self-hosted) — migração para WhatsApp Cloud API oficial em andamento (número não-oficial já sofreu bloqueio pela Meta uma vez)
-- **Pagamento**: Asaas (assinatura mensal do fornecedor via checkout hospedado) — plano é migrar para Pagar.me assim que houver CNPJ
+- **Deploy**: build automático a partir do GitHub `master`
+- _Desativados com o fluxo WhatsApp: Claude (Anthropic API), Evolution API, Asaas._
 
 ## Estrutura
 
@@ -150,28 +149,27 @@ db/
 
 ## Setup local
 
-1. Copie `.env.example` para `.env` e preencha as chaves (Supabase, Anthropic, Evolution API, Asaas).
-2. Crie um projeto no Supabase e rode o `db/schema.sql` no SQL editor.
-3. Suba uma instância da Evolution API (Docker) e configure o webhook dela para apontar para `POST /webhook/whatsapp` deste backend.
-4. Configure um webhook no Asaas apontando para `POST /webhook/pagamento`, eventos `PAYMENT_CONFIRMED` (ativa o fornecedor) e `PAYMENT_OVERDUE` (desativa o fornecedor quando a assinatura vence sem pagamento), com o mesmo token em `ASAAS_WEBHOOK_TOKEN`.
-5. Instale as dependências e rode:
+1. Copie `.env.example` para `.env` e preencha `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`,
+   `BACKEND_PUBLIC_URL` e `ADMIN_CHAVE`. As variáveis do fluxo WhatsApp são opcionais.
+2. Rode `db/schema.sql` no SQL editor do Supabase (ou `db/migracao_diretorio.sql` se o
+   banco já tinha o schema antigo).
+3. Instale e rode:
 
 ```bash
 npm install
 npm run dev
 ```
 
+> **Gotcha:** o projeto Supabase é do plano gratuito e pausa por inatividade. Se a conexão
+> cair, clique em "Resume project" no dashboard — não é bug do código.
+
 ## Próximos passos
 
-**Diretório (foco atual):**
-1. Piloto: publicar 10-15 profissionais reais pelo `/diretorio/admin` e observar o uso.
-2. Depois do piloto, na ordem: avaliações/estrelas → selo "verificado" → dashboard do
-   profissional (com login) → caminho pago (`DIRETORIO_EXIGE_ASSINATURA` + checkout).
-3. Automatizar o envio do magic link; fotos de perfil.
-4. Quando o diretório se provar: apontar `/` para `/diretorio` e remover a rota do webhook.
-
-**Fluxo WhatsApp (manutenção até a virada):**
-- Concluir migração Evolution API → WhatsApp Cloud API oficial (cadastro na Meta em andamento).
-- Deduplicar mensagens recebidas do webhook (Evolution API às vezes entrega a mesma duas vezes).
-- Resolver o domínio sem `www` (`achaiquemfaz.com.br`), hoje sem registro DNS.
-- Migrar de Asaas para Pagar.me assim que o CNPJ estiver pronto.
+1. **Piloto**: publicar 10-15 profissionais reais pelo `/diretorio/admin` e observar o uso.
+2. Depois do piloto, **nesta ordem**: avaliações/estrelas → selo "verificado" (manual) →
+   dashboard do profissional (precisa de login/auth) → caminho pago
+   (`DIRETORIO_EXIGE_ASSINATURA` + checkout).
+3. Automatizar o envio do magic link (hoje é copia-e-cola pelo admin); fotos de perfil.
+4. Resolver o domínio sem `www` (`achaiquemfaz.com.br`), hoje sem registro DNS.
+5. Desligar a instância Evolution API na Railway (não é mais usada) — as variáveis de
+   ambiente já são opcionais, pode remover.

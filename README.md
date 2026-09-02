@@ -28,6 +28,40 @@ Agente que conecta demandantes e prestadores de serviço via WhatsApp, começand
 - Domínio sem `www` (`achaiquemfaz.com.br`) — CNAME na raiz é rejeitado pelo Registro.br em modo avançado; resolver isso no modo básico exigiria remover os registros TXT de verificação da Railway, então foi adiado. Por enquanto, use sempre `www.achaiquemfaz.com.br`.
 - Deduplicação de mensagens recebidas do WhatsApp (a Evolution API às vezes entrega a mesma mensagem mais de uma vez, gerando respostas repetidas) — identificado, correção ainda pendente.
 
+## Diretório (`/diretorio`) — módulo em paralelo (em construção)
+
+Alternativa ao disparo automático no WhatsApp: uma **vitrine pública** de prestadores,
+no modelo marketplace (tipo GetNinjas/Triider), com foco inicial em **casa e condomínio**
+em João Pessoa. O cliente busca, abre o perfil e fala **direto** com o prestador por um
+link `wa.me` — sem bot, sem Evolution API, sem depender de aprovação da Meta.
+
+Roda no mesmo backend/deploy, montado em `/diretorio`, **sem tocar no fluxo do WhatsApp**.
+A ideia é manter os dois no ar até o diretório estar validado; na virada, aponta-se `/`
+para o diretório e remove-se a rota do webhook.
+
+**Rotas:**
+- `GET /diretorio` — busca (filtro por serviço, bairro e tipo casa/condomínio).
+- `GET /diretorio/p/:slug` — perfil público + botão "Chamar no WhatsApp".
+- `GET|POST /diretorio/cadastro` — auto-cadastro do prestador. Enquanto
+  `DIRETORIO_EXIGE_ASSINATURA=false`, é gratuito e o perfil já entra publicado; a tela
+  de sucesso mostra o **magic link** de edição para o prestador guardar.
+- `GET|POST /diretorio/editar?token=…` — o prestador edita o próprio perfil (descrição,
+  serviços, bairro, segmentos) e liga/desliga a publicação. Sem senha, só o token.
+- `GET /diretorio/admin?chave=…` — painel gated por `ADMIN_CHAVE`. Lista todos os perfis
+  com o magic link e uma mensagem de convite pronta para enviar aos ~150 já cadastrados
+  (opt-in de publicação — exigência de LGPD, já que eles foram importados, não se cadastraram).
+
+**Banco:** a tabela `fornecedores` ganhou colunas nullable (`publicado`, `slug`,
+`descricao`, `servicos[]`, `segmentos[]`, `edit_token`). Visibilidade no diretório =
+`publicado = true`, **independente** de `status`/`trial` (que seguem controlando só o
+disparo no WhatsApp). Um cadastro feito pelo diretório entra como `status = 'inativo'`.
+Rodar `db/migracao_diretorio.sql` no SQL editor do Supabase (idempotente; faz o backfill
+de `slug` e `edit_token` dos registros existentes).
+
+**Ainda pendente no diretório:** caminho pago (quando `DIRETORIO_EXIGE_ASSINATURA=true`,
+hoje o cadastro entra despublicado e não há checkout); envio automático do magic link por
+e-mail/WhatsApp (hoje é manual, via painel admin); fotos de perfil.
+
 ## Fluxo
 
 1. Demandante manda mensagem no WhatsApp.
@@ -85,6 +119,7 @@ npm run dev
 
 ## Próximos passos sugeridos
 
+- **Diretório**: validar a busca com 10-15 prestadores reais publicados; decidir se/quando ligar `DIRETORIO_EXIGE_ASSINATURA` e construir o checkout do diretório; automatizar o envio do magic link.
 - Concluir migração Evolution API → WhatsApp Cloud API oficial (cadastro de desenvolvedor na Meta em andamento).
 - Deduplicar mensagens recebidas do webhook do WhatsApp (Evolution API às vezes entrega a mesma mensagem mais de uma vez).
 - Painel simples para o fornecedor gerenciar status (ativo/inativo) e ver demandas recebidas.

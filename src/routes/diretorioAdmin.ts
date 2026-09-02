@@ -17,9 +17,9 @@ const CSS_ADMIN = `
   table.admin th, table.admin td { border: 1px solid var(--line-strong); padding: 8px 10px; text-align: left; vertical-align: top; }
   table.admin th { font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-muted); background: var(--paper-alt); }
   table.admin td.link { font-family: var(--font-mono); font-size: 0.78rem; word-break: break-all; max-width: 320px; }
-  .tag { font-family: var(--font-mono); font-size: 0.7rem; text-transform: uppercase; padding: 2px 6px; border-radius: 2px; }
-  .tag.on { background: var(--work); color: var(--stamp-ink); }
-  .tag.off { border: 1px solid var(--line-strong); color: var(--ink-muted); }
+  .st { font-family: var(--font-mono); font-size: 0.7rem; text-transform: uppercase; padding: 2px 6px; border-radius: 2px; }
+  .st.on { background: var(--work); color: var(--stamp-ink); }
+  .st.off { border: 1px solid var(--line-strong); color: var(--ink-muted); }
   form.inline { display: inline; }
   form.inline button { font-family: var(--font-mono); font-size: 0.75rem; text-transform: uppercase; padding: 5px 8px; border: 1px solid var(--line-strong); background: var(--paper); cursor: pointer; border-radius: 2px; }
 `;
@@ -36,7 +36,7 @@ function render(perfis: Awaited<ReturnType<typeof listarPerfisAdmin>>, chave: st
       <tr>
         <td>${escaparHtml(p.nome)}<br /><span style="color: var(--ink-muted); font-size: 0.8rem;">${escaparHtml(p.categoria)}</span></td>
         <td>${escaparHtml(p.whatsapp)}</td>
-        <td>${p.publicado ? '<span class="tag on">no ar</span>' : '<span class="tag off">oculto</span>'}</td>
+        <td>${p.publicado ? '<span class="st on">no ar</span>' : '<span class="st off">oculto</span>'}</td>
         <td>
           <form class="inline" method="POST" action="/diretorio/admin/publicar">
             <input type="hidden" name="chave" value="${escaparHtml(chave)}" />

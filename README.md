@@ -39,8 +39,14 @@ Roda no mesmo backend/deploy, montado em `/diretorio`, **sem tocar no fluxo do W
 A ideia é manter os dois no ar até o diretório estar validado; na virada, aponta-se `/`
 para o diretório e remove-se a rota do webhook.
 
+Visual: design system próprio (base branca SaaS, verde primário, coral em detalhe;
+Bricolage Grotesque + Work Sans + IBM Plex Mono), servido por `paginaSite` em
+`services/html.ts` (`CSS_SITE`). Independente da identidade "ordem de serviço" do
+fluxo WhatsApp (`paginaTicket`).
+
 **Rotas:**
-- `GET /diretorio` — busca (filtro por serviço, bairro e tipo casa/condomínio).
+- `GET /diretorio` — home (hero + busca "O que? / Onde?" + categorias + como funciona).
+- `GET /diretorio/busca` — resultados (filtro por serviço, bairro e tipo casa/condomínio).
 - `GET /diretorio/p/:slug` — perfil público + botão "Chamar no WhatsApp".
 - `GET|POST /diretorio/cadastro` — auto-cadastro do prestador. Enquanto
   `DIRETORIO_EXIGE_ASSINATURA=false`, é gratuito e o perfil já entra publicado; a tela

@@ -15,6 +15,7 @@ export const diretorioEditarRouter = Router();
 function paginaSemToken(): string {
   return paginaSite({
     titulo: "Link inválido",
+    largura: "estreita",
     secoes: `<section class="msg"><h2>Link inválido ou expirado</h2><p class="lede" style="margin: 0 auto;">Confira se você copiou o endereço completo. Se precisar de um novo link, fale com a gente no Instagram <a href="https://instagram.com/achaiquemfaz">@achaiquemfaz</a>.</p></section>`,
   });
 }
@@ -60,7 +61,7 @@ function paginaFormulario(perfil: PerfilDiretorio, token: string, opts: { erro?:
     </section>
   `;
 
-  return paginaSite({ titulo: "Editar perfil", secoes, cssExtra: CSS_FORM_DIRETORIO });
+  return paginaSite({ titulo: "Editar perfil", secoes, cssExtra: CSS_FORM_DIRETORIO, largura: "estreita" });
 }
 
 diretorioEditarRouter.get("/", async (req, res) => {

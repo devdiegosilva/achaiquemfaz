@@ -121,6 +121,7 @@ export interface PerfilDiretorio {
   slug: string;
   publicado: boolean;
   status: "ativo" | "inativo" | "trial";
+  created_at?: string;
 }
 
 export interface MensagemRecebida {

@@ -68,7 +68,7 @@ function paginaFormulario(erro?: string, valores: Record<string, string> = {}): 
     </script>
   `;
 
-  return paginaSite({ titulo: "Cadastre seu serviço", secoes, cssExtra: CSS_FORM_DIRETORIO });
+  return paginaSite({ titulo: "Cadastre seu serviço", secoes, cssExtra: CSS_FORM_DIRETORIO, largura: "estreita" });
 }
 
 function paginaSucesso(nome: string, slug: string, publicado: boolean, linkEdicao: string): string {
@@ -89,7 +89,7 @@ function paginaSucesso(nome: string, slug: string, publicado: boolean, linkEdica
       <p><a class="stamp-btn" href="${escaparHtml(linkEdicao)}">Abrir meu perfil para editar</a></p>
     </section>
   `;
-  return paginaSite({ titulo: "Cadastro recebido", secoes, cssExtra: CSS_FORM_DIRETORIO });
+  return paginaSite({ titulo: "Cadastro recebido", secoes, cssExtra: CSS_FORM_DIRETORIO, largura: "estreita" });
 }
 
 diretorioCadastroRouter.get("/", (_req, res) => {

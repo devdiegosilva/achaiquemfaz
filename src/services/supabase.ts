@@ -199,12 +199,19 @@ export async function salvarDemandante(whatsapp: string, nome: string | null, co
 // ===========================================================================
 
 const CAMPOS_PERFIL =
-  "id, nome, categoria, servicos, bairro, cidade, whatsapp, descricao, segmentos, slug, publicado, status";
+  "id, nome, categoria, servicos, bairro, cidade, whatsapp, descricao, segmentos, slug, publicado, status, created_at";
 
 export interface FiltrosDiretorio {
   categoria?: string;
   bairro?: string;
   segmento?: string;
+  termo?: string;
+  ordem?: "nome" | "recentes";
+}
+
+// Remove caracteres que quebram a sintaxe do filtro .or() do PostgREST.
+function limparTermo(termo: string): string {
+  return termo.replace(/[,()*:]/g, " ").trim().slice(0, 60);
 }
 
 export async function buscarPerfisPublicados(filtros: FiltrosDiretorio = {}): Promise<PerfilDiretorio[]> {
@@ -214,7 +221,17 @@ export async function buscarPerfisPublicados(filtros: FiltrosDiretorio = {}): Pr
   if (filtros.bairro) query = query.ilike("bairro", `%${filtros.bairro}%`);
   if (filtros.segmento) query = query.contains("segmentos", [filtros.segmento]);
 
-  const { data, error } = await query.order("nome");
+  const termo = filtros.termo ? limparTermo(filtros.termo) : "";
+  if (termo) {
+    query = query.or(`nome.ilike.*${termo}*,categoria.ilike.*${termo}*,descricao.ilike.*${termo}*`);
+  }
+
+  query =
+    filtros.ordem === "recentes"
+      ? query.order("created_at", { ascending: false })
+      : query.order("nome");
+
+  const { data, error } = await query;
   if (error) throw error;
   return (data ?? []) as unknown as PerfilDiretorio[];
 }
@@ -224,6 +241,17 @@ export async function buscarCategoriasPublicadas(): Promise<string[]> {
   const { data, error } = await supabase.from("fornecedores").select("categoria").eq("publicado", true);
   if (error) throw error;
   return Array.from(new Set((data ?? []).map((f) => f.categoria as string)));
+}
+
+// Bairros que já têm pelo menos um perfil publicado — usado para o filtro da busca.
+export async function buscarBairrosPublicados(): Promise<string[]> {
+  const { data, error } = await supabase
+    .from("fornecedores")
+    .select("bairro")
+    .eq("publicado", true)
+    .not("bairro", "is", null);
+  if (error) throw error;
+  return Array.from(new Set((data ?? []).map((f) => (f.bairro as string) ?? "").filter(Boolean)));
 }
 
 export async function buscarPerfilPorSlug(slug: string): Promise<PerfilDiretorio | null> {

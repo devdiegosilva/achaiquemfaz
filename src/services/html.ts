@@ -25,6 +25,8 @@ const CSS_BASE = `
     --stamp: #c04a1f;
     --stamp-ink: #fcf1e4;
     --work: #145c45;
+    --work-deep: #0f4835;
+    --paper-sink: #efe0c8;
     --line: #d9c9ab;
     --line-strong: #c2ae87;
     --shadow: rgba(30, 26, 16, 0.22);
@@ -167,27 +169,190 @@ ${RODAPE}
   return documento(titulo, cssExtra, corpo);
 }
 
-// Casca do diretório público: mesma folha, mas com barra de navegação em vez do nº de chamado.
+// CSS do diretório (formato marketplace). Injetado só pelas páginas do site,
+// não pesa nas páginas de "ticket" do fluxo WhatsApp.
+const CSS_SITE = `
+  .site { min-height: 100vh; display: flex; flex-direction: column; background: var(--backdrop); }
+  .site-top {
+    position: sticky; top: 0; z-index: 20;
+    background: var(--work-deep); color: var(--paper);
+    display: flex; align-items: center; gap: 16px;
+    padding: 12px clamp(14px, 4vw, 28px);
+  }
+  .site-logo {
+    font-family: var(--font-display); font-weight: 800; font-size: 1.3rem; line-height: 0.95;
+    text-transform: uppercase; letter-spacing: 0.01em; color: var(--paper);
+    text-decoration: none; white-space: nowrap;
+  }
+  .site-logo span { display: block; font-size: 0.72rem; letter-spacing: 0.2em; color: #f0b8a3; }
+  .site-search { flex: 1; display: flex; min-width: 0; background: var(--paper); border-radius: 4px; overflow: hidden; border: 2px solid transparent; }
+  .site-search:focus-within { border-color: #c9871f; }
+  .site-search select {
+    border: none; background: var(--paper-sink); color: var(--ink);
+    font-family: var(--font-mono); font-size: 0.78rem; padding: 0 8px;
+    border-right: 1px solid var(--line-strong); max-width: 150px; cursor: pointer;
+  }
+  .site-search input {
+    flex: 1; min-width: 0; border: none; padding: 11px 13px;
+    font-family: var(--font-body); font-size: 0.98rem; color: var(--ink); background: var(--paper);
+  }
+  .site-search input::placeholder { color: var(--ink-muted); }
+  .site-search button { border: none; background: var(--stamp); color: var(--paper); padding: 0 17px; display: flex; align-items: center; cursor: pointer; }
+  .site-search button svg { width: 19px; height: 19px; }
+  .site-top-right { display: flex; align-items: center; gap: 14px; white-space: nowrap; }
+  .site-loc { font-family: var(--font-mono); font-size: 0.7rem; line-height: 1.2; color: #e6d7c2; display: flex; align-items: center; gap: 6px; }
+  .site-loc strong { color: var(--paper); font-weight: 600; }
+  .site-prest {
+    font-family: var(--font-display); font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em;
+    font-size: 0.9rem; color: var(--paper); text-decoration: none;
+    border: 1.5px solid rgba(252, 241, 228, 0.5); padding: 7px 12px; border-radius: 3px;
+  }
+  .site-prest:hover { background: rgba(252, 241, 228, 0.12); }
+  .site-main { flex: 1; width: 100%; max-width: 1200px; margin: 0 auto; }
+  .site-main.estreita { max-width: 640px; }
+  .site-foot {
+    background: var(--work-deep); color: #dcccb4;
+    font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.04em; text-transform: uppercase;
+    padding: 18px clamp(14px, 4vw, 28px); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+  }
+  .site-foot a { color: #f0b8a3; text-decoration: none; }
+
+  .subbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px clamp(14px, 4vw, 28px); background: var(--paper-alt); border-bottom: 1px solid var(--line-strong); }
+  .crumbs { font-family: var(--font-mono); font-size: 0.74rem; color: var(--ink-muted); letter-spacing: 0.03em; }
+  .crumbs a { text-decoration: none; color: var(--work); }
+  .crumbs .sep { margin: 0 7px; opacity: 0.6; }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip-filtro { display: inline-flex; align-items: center; gap: 7px; background: var(--paper); border: 1px solid var(--line-strong); border-radius: 999px; padding: 4px 6px 4px 12px; font-size: 0.8rem; text-decoration: none; color: var(--ink); }
+  .chip-filtro span { background: var(--paper-sink); color: var(--ink-muted); width: 17px; height: 17px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; line-height: 1; }
+  .subbar .count { margin-left: auto; font-family: var(--font-mono); font-size: 0.76rem; color: var(--ink-muted); }
+  .sortsel { font-family: var(--font-mono); font-size: 0.76rem; padding: 7px 10px; border: 1px solid var(--line-strong); background: var(--paper); color: var(--ink); border-radius: 3px; }
+
+  .body { display: grid; grid-template-columns: 232px 1fr; gap: 28px; padding: 22px clamp(14px, 4vw, 28px) 40px; }
+  .filtros { align-self: start; }
+  .filtros-acc > summary { display: none; }
+  .filtros-acc[open] { display: block; }
+  .fgrupo { border-bottom: 1px solid var(--line); padding: 2px 0 14px; margin-bottom: 14px; }
+  .fgrupo:last-child { border-bottom: none; }
+  .fgrupo h3 { font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-muted); margin: 0 0 10px; }
+  a.fopt { display: flex; align-items: center; gap: 9px; padding: 5px 0; font-size: 0.9rem; text-decoration: none; color: var(--ink); }
+  a.fopt:hover { color: var(--work); }
+  a.fopt[aria-current="true"] { color: var(--work); font-weight: 600; }
+  a.fopt .marca { width: 13px; height: 13px; border: 1.5px solid var(--line-strong); border-radius: 3px; flex-shrink: 0; }
+  a.fopt[aria-current="true"] .marca { border-color: var(--work); background: var(--work); }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(228px, 1fr)); gap: 16px; }
+  .card { position: relative; display: flex; flex-direction: column; gap: 9px; background: var(--paper); border: 1px solid var(--line-strong); border-radius: 5px; padding: 16px 16px 15px; color: var(--ink); transition: transform 0.14s ease, box-shadow 0.14s ease, border-color 0.14s ease; }
+  .card:hover { transform: translateY(-3px); border-color: var(--work); box-shadow: 0 12px 24px -14px var(--shadow); }
+  .card-stretch { position: absolute; inset: 0; border-radius: inherit; text-indent: -9999px; overflow: hidden; }
+  .card-stretch:focus-visible { outline: 2px solid var(--work); outline-offset: 2px; }
+  .card .wa { position: relative; z-index: 1; }
+  .card-head { display: flex; align-items: center; gap: 11px; }
+  .card-id { display: flex; flex-direction: column; min-width: 0; }
+  .monogram { flex-shrink: 0; width: 44px; height: 44px; border-radius: 50%; background: var(--work); color: var(--paper); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-weight: 700; font-size: 1.05rem; }
+  .monogram.big { width: 88px; height: 88px; font-size: 2.1rem; }
+  .card-name { display: block; font-weight: 600; font-size: 1rem; line-height: 1.2; overflow-wrap: anywhere; }
+  .card-cat { display: block; font-family: var(--font-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-muted); margin-top: 2px; }
+  .card-loc { font-size: 0.85rem; color: var(--ink-muted); }
+  .card-desc { font-size: 0.88rem; color: var(--ink); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .card-segs { display: flex; gap: 5px; flex-wrap: wrap; }
+  .seg { font-family: var(--font-mono); font-size: 0.63rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-muted); border: 1px solid var(--line); border-radius: 2px; padding: 2px 6px; }
+  .wa { margin-top: auto; display: flex; align-items: center; justify-content: center; gap: 8px; background: var(--work); color: var(--paper); text-decoration: none; font-family: var(--font-display); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; font-size: 0.95rem; padding: 10px 12px; border: none; border-radius: 3px; cursor: pointer; transition: background 0.14s ease; }
+  .wa:hover { background: var(--work-deep); }
+  .wa svg { width: 16px; height: 16px; }
+
+  .pager { display: flex; justify-content: center; gap: 6px; margin-top: 26px; }
+  .pager span, .pager a { font-family: var(--font-mono); font-size: 0.8rem; min-width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--line-strong); border-radius: 3px; text-decoration: none; color: var(--ink); }
+  .pager .on { background: var(--work); color: var(--paper); border-color: var(--work); }
+  .vazio { border: 1px dashed var(--line-strong); border-radius: 4px; padding: 40px 22px; text-align: center; color: var(--ink-muted); font-size: 0.95rem; }
+
+  .pdp { padding: 26px clamp(14px, 4vw, 28px) 44px; display: grid; grid-template-columns: 1fr 330px; gap: 34px; }
+  .pdp-main { min-width: 0; }
+  .pdp-id { display: flex; gap: 18px; align-items: center; margin-bottom: 8px; }
+  .pdp h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(1.8rem, 5vw, 2.15rem); line-height: 1; margin: 0 0 6px; color: var(--work-deep); text-wrap: balance; }
+  .pdp .kicker { font-family: var(--font-mono); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--stamp); margin-bottom: 4px; }
+  .pdp-meta { margin: 16px 0 0; font-size: 0.88rem; color: var(--ink-muted); font-family: var(--font-mono); display: flex; gap: 8px 16px; flex-wrap: wrap; }
+  .pdp-sec { border-top: 1px solid var(--line); padding-top: 20px; margin-top: 24px; }
+  .pdp-sec h2 { font-family: var(--font-display); font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em; font-size: 1.15rem; color: var(--work-deep); margin: 0 0 12px; }
+  .pdp-sec p.sobre { font-size: 0.98rem; max-width: 60ch; margin: 0; white-space: pre-wrap; }
+  .svc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px 16px; }
+  .svc { display: flex; gap: 8px; align-items: baseline; font-size: 0.92rem; }
+  .svc::before { content: "\\2713"; flex-shrink: 0; color: var(--work); font-weight: 700; font-size: 0.9rem; }
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .step .num { font-family: var(--font-mono); font-weight: 600; color: var(--stamp); font-size: 0.9rem; }
+  .step p { margin: 4px 0 0; font-size: 0.86rem; color: var(--ink-muted); }
+  .buybox { align-self: start; position: sticky; top: 84px; border: 1.5px solid var(--line-strong); border-radius: 6px; background: var(--paper-alt); padding: 20px; }
+  .bb-label { font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-muted); }
+  .bb-name { font-family: var(--font-display); font-weight: 700; font-size: 1.4rem; color: var(--work-deep); margin: 3px 0 2px; }
+  .bb-sub { font-size: 0.84rem; color: var(--ink-muted); margin-bottom: 16px; }
+  .buybox .wa { width: 100%; font-size: 1.05rem; padding: 13px; }
+  .bb-note { margin-top: 14px; font-size: 0.8rem; color: var(--ink-muted); border: 1px dashed var(--line-strong); border-radius: 4px; padding: 10px 12px; background: var(--paper); }
+  .bb-report { display: block; margin-top: 12px; font-family: var(--font-mono); font-size: 0.72rem; color: var(--ink-muted); }
+
+  @media (max-width: 900px) {
+    .body { grid-template-columns: 1fr; }
+    .filtros-acc { border: 1px solid var(--line-strong); border-radius: 4px; padding: 2px 14px; background: var(--paper-alt); }
+    .filtros-acc > summary { display: block; font-family: var(--font-mono); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; padding: 10px 0; cursor: pointer; }
+    .pdp { grid-template-columns: 1fr; }
+    .buybox { position: static; }
+    .steps { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 620px) {
+    .site-top { flex-wrap: wrap; }
+    .site-search { order: 3; flex-basis: 100%; }
+    .site-search select { display: none; }
+    .site-prest { display: none; }
+  }
+`;
+
+// Casca do diretório: barra de busca fixa no topo (formato marketplace), conteúdo
+// central e rodapé. paginaTicket (fluxo WhatsApp) continua intocada.
 export function paginaSite(opts: {
   titulo: string;
   secoes: string;
   cssExtra?: string;
   metaDescricao?: string;
+  largura?: "ampla" | "estreita";
+  busca?: {
+    categorias: Array<{ valor: string; rotulo: string }>;
+    categoriaAtual?: string;
+    termoAtual?: string;
+  };
 }): string {
-  const corpo = `<div class="oficina">
-  <main class="ticket">
-    <div class="perf" aria-hidden="true"></div>
-    <header class="head">
-      <a class="brand" href="/diretorio" style="text-decoration: none; color: inherit;">Achaí <span>Quem Faz</span></a>
-      <div class="meta-row">
-        <a href="/diretorio" style="color: var(--work); text-decoration: none;">Buscar</a>
-        <a href="/diretorio/cadastro" style="color: var(--work); text-decoration: none;">Sou prestador</a>
-      </div>
-    </header>
+  const cats = opts.busca?.categorias ?? [];
+  const catAtual = opts.busca?.categoriaAtual ?? "";
+  const opcoesCat = cats
+    .map(
+      (c) =>
+        `<option value="${escaparHtml(c.valor)}"${c.valor === catAtual ? " selected" : ""}>${escaparHtml(c.rotulo)}</option>`
+    )
+    .join("");
+
+  const iconeBusca = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>`;
+
+  const corpo = `<div class="site">
+  <header class="site-top">
+    <a class="site-logo" href="/diretorio">Achaí<span>Quem Faz</span></a>
+    <form class="site-search" method="GET" action="/diretorio" role="search">
+      <select name="categoria" aria-label="Serviço">
+        <option value="">Todos os serviços</option>
+        ${opcoesCat}
+      </select>
+      <input type="text" name="q" value="${escaparHtml(opts.busca?.termoAtual ?? "")}" placeholder="Buscar eletricista, encanador, diarista…" />
+      <button type="submit" aria-label="Buscar">${iconeBusca}</button>
+    </form>
+    <div class="site-top-right">
+      <span class="site-loc">Atende em&nbsp;<strong>João Pessoa · PB</strong></span>
+      <a class="site-prest" href="/diretorio/cadastro">Sou prestador</a>
+    </div>
+  </header>
+  <main class="site-main${opts.largura === "estreita" ? " estreita" : ""}">
     ${opts.secoes}
-    <div class="perf" aria-hidden="true"></div>
-${RODAPE}
   </main>
+  <footer class="site-foot">
+    <span>Achaí Quem Faz · João Pessoa · PB</span>
+    <span><a href="/diretorio/cadastro">Sou prestador</a> &nbsp;·&nbsp; <a href="https://instagram.com/achaiquemfaz" target="_blank" rel="noopener">@achaiquemfaz</a></span>
+  </footer>
 </div>`;
-  return documento(opts.titulo, opts.cssExtra ?? "", corpo, opts.metaDescricao);
+
+  return documento(opts.titulo, `${CSS_SITE}${opts.cssExtra ? `\n${opts.cssExtra}` : ""}`, corpo, opts.metaDescricao);
 }

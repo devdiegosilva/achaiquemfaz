@@ -292,6 +292,7 @@ const CSS_SITE = `
     .body { grid-template-columns: 1fr; }
     .filtros-acc { border: 1px solid var(--line-strong); border-radius: 4px; padding: 2px 14px; background: var(--paper-alt); }
     .filtros-acc > summary { display: block; font-family: var(--font-mono); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; padding: 10px 0; cursor: pointer; }
+    .filtros-acc[open] > div { max-height: 280px; overflow-y: auto; margin-bottom: 8px; }
     .pdp { grid-template-columns: 1fr; }
     .buybox { position: static; }
     .steps { grid-template-columns: 1fr; }

@@ -1,12 +1,9 @@
-// Identidade visual "ordem de serviço": usada na landing page. Papel kraft sobre uma
-// bancada de trabalho, com furos de picote, linhas de corte tracejadas e botões estilo carimbo.
-export function paginaTicket(titulo: string, secoes: string, cssExtra = ""): string {
-  return `<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>${titulo} — Achaí Quem Faz</title>
+// Identidade visual "ordem de serviço", na paleta creme/verde-floresta/coral — fixa,
+// não muda com o tema escuro do sistema. Usada em duas cascas:
+//   paginaTicket  -> landing/cadastro do fluxo WhatsApp (papel picotado, nº de chamado)
+//   paginaSite    -> diretório público (/diretorio), com barra de navegação
+
+const FONTES_E_GA = `
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-9V8C587NK5"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
@@ -16,8 +13,9 @@ export function paginaTicket(titulo: string, secoes: string, cssExtra = ""): str
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<style>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">`;
+
+const CSS_BASE = `
   :root {
     --backdrop: #e3d3b8;
     --paper: #fcf1e4;
@@ -85,22 +83,9 @@ export function paginaTicket(titulo: string, secoes: string, cssExtra = ""): str
   footer.foot svg { flex-shrink: 0; }
   .msg { text-align: center; padding-top: clamp(48px, 12vw, 88px); padding-bottom: clamp(48px, 12vw, 88px); }
   @media (prefers-reduced-motion: reduce) { .stamp-btn { transition: none; } }
-  ${cssExtra}
-</style>
-</head>
-<body>
-<div class="oficina">
-  <main class="ticket">
-    <div class="perf" aria-hidden="true"></div>
-    <header class="head">
-      <div class="brand">Achaí <span>Quem Faz</span></div>
-      <div class="meta-row">
-        <span class="stamp-num" id="ticketNum">Nº 0001</span>
-        <span>Chamado via WhatsApp</span>
-      </div>
-    </header>
-    ${secoes}
-    <div class="perf" aria-hidden="true"></div>
+`;
+
+const RODAPE = `
     <footer class="foot">
       <span>Achaí Quem Faz</span>
       <a href="https://instagram.com/achaiquemfaz" target="_blank" rel="noopener">
@@ -112,7 +97,55 @@ export function paginaTicket(titulo: string, secoes: string, cssExtra = ""): str
         @achaiquemfaz
       </a>
       <span>João Pessoa · PB</span>
-    </footer>
+    </footer>`;
+
+// Escapa texto vindo do banco (nome, descrição, bairro) antes de interpolar no HTML.
+export function escaparHtml(valor: string | null | undefined): string {
+  return String(valor ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function escExtra(cssExtra: string): string {
+  return cssExtra ? `\n  ${cssExtra}` : "";
+}
+
+function documento(titulo: string, cssExtra: string, corpo: string, metaDescricao?: string): string {
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>${titulo} — Achaí Quem Faz</title>${
+    metaDescricao ? `\n<meta name="description" content="${metaDescricao}" />` : ""
+  }
+${FONTES_E_GA}
+<style>${CSS_BASE}${escExtra(cssExtra)}</style>
+</head>
+<body>
+${corpo}
+</body>
+</html>`;
+}
+
+// Casca "ordem de serviço": papel kraft picotado, com nº de chamado que roda sozinho.
+export function paginaTicket(titulo: string, secoes: string, cssExtra = ""): string {
+  const corpo = `<div class="oficina">
+  <main class="ticket">
+    <div class="perf" aria-hidden="true"></div>
+    <header class="head">
+      <div class="brand">Achaí <span>Quem Faz</span></div>
+      <div class="meta-row">
+        <span class="stamp-num" id="ticketNum">Nº 0001</span>
+        <span>Chamado via WhatsApp</span>
+      </div>
+    </header>
+    ${secoes}
+    <div class="perf" aria-hidden="true"></div>
+${RODAPE}
   </main>
 </div>
 <script>
@@ -130,7 +163,31 @@ export function paginaTicket(titulo: string, secoes: string, cssExtra = ""): str
       render();
     }, 4000);
   })();
-</script>
-</body>
-</html>`;
+</script>`;
+  return documento(titulo, cssExtra, corpo);
+}
+
+// Casca do diretório público: mesma folha, mas com barra de navegação em vez do nº de chamado.
+export function paginaSite(opts: {
+  titulo: string;
+  secoes: string;
+  cssExtra?: string;
+  metaDescricao?: string;
+}): string {
+  const corpo = `<div class="oficina">
+  <main class="ticket">
+    <div class="perf" aria-hidden="true"></div>
+    <header class="head">
+      <a class="brand" href="/diretorio" style="text-decoration: none; color: inherit;">Achaí <span>Quem Faz</span></a>
+      <div class="meta-row">
+        <a href="/diretorio" style="color: var(--work); text-decoration: none;">Buscar</a>
+        <a href="/diretorio/cadastro" style="color: var(--work); text-decoration: none;">Sou prestador</a>
+      </div>
+    </header>
+    ${opts.secoes}
+    <div class="perf" aria-hidden="true"></div>
+${RODAPE}
+  </main>
+</div>`;
+  return documento(opts.titulo, opts.cssExtra ?? "", corpo, opts.metaDescricao);
 }

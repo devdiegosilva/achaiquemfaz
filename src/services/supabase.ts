@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { env } from "../config/env";
-import type { Fornecedor } from "../types";
+import type { Fornecedor, PerfilDiretorio } from "../types";
+import { gerarSlug, sufixoAleatorio } from "./slug";
 
 export const supabase = createClient(env.supabaseUrl, env.supabaseServiceRoleKey);
 
@@ -188,5 +189,152 @@ export async function salvarDemandante(whatsapp: string, nome: string | null, co
       { whatsapp, nome, contexto_pendente: contextoPendente, atualizado_em: new Date().toISOString() },
       { onConflict: "whatsapp" }
     );
+  if (error) throw error;
+}
+
+// ===========================================================================
+// Diretório (/diretorio) — módulo em paralelo ao fluxo do WhatsApp.
+// Um fornecedor só aparece no diretório quando publicado = true. É independente
+// de status/trial (que controlam o disparo no WhatsApp).
+// ===========================================================================
+
+const CAMPOS_PERFIL =
+  "id, nome, categoria, servicos, bairro, cidade, whatsapp, descricao, segmentos, slug, publicado, status";
+
+export interface FiltrosDiretorio {
+  categoria?: string;
+  bairro?: string;
+  segmento?: string;
+}
+
+export async function buscarPerfisPublicados(filtros: FiltrosDiretorio = {}): Promise<PerfilDiretorio[]> {
+  let query = supabase.from("fornecedores").select(CAMPOS_PERFIL).eq("publicado", true);
+
+  if (filtros.categoria) query = query.eq("categoria", filtros.categoria);
+  if (filtros.bairro) query = query.ilike("bairro", `%${filtros.bairro}%`);
+  if (filtros.segmento) query = query.contains("segmentos", [filtros.segmento]);
+
+  const { data, error } = await query.order("nome");
+  if (error) throw error;
+  return (data ?? []) as unknown as PerfilDiretorio[];
+}
+
+// Categorias que já têm pelo menos um perfil publicado — usado para montar o filtro da busca.
+export async function buscarCategoriasPublicadas(): Promise<string[]> {
+  const { data, error } = await supabase.from("fornecedores").select("categoria").eq("publicado", true);
+  if (error) throw error;
+  return Array.from(new Set((data ?? []).map((f) => f.categoria as string)));
+}
+
+export async function buscarPerfilPorSlug(slug: string): Promise<PerfilDiretorio | null> {
+  const { data, error } = await supabase
+    .from("fornecedores")
+    .select(CAMPOS_PERFIL)
+    .eq("slug", slug)
+    .eq("publicado", true)
+    .maybeSingle();
+  if (error) throw error;
+  return (data as unknown as PerfilDiretorio | null) ?? null;
+}
+
+// Usado pela tela de edição via magic link — traz o perfil mesmo despublicado.
+export async function buscarPerfilPorToken(token: string): Promise<PerfilDiretorio | null> {
+  const { data, error } = await supabase
+    .from("fornecedores")
+    .select(CAMPOS_PERFIL)
+    .eq("edit_token", token)
+    .maybeSingle();
+  if (error) throw error;
+  return (data as unknown as PerfilDiretorio | null) ?? null;
+}
+
+export async function atualizarPerfilPorToken(
+  token: string,
+  campos: {
+    categoria: string;
+    descricao: string | null;
+    servicos: string[];
+    bairro: string | null;
+    segmentos: string[];
+    publicado: boolean;
+  }
+): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("fornecedores")
+    .update(campos)
+    .eq("edit_token", token)
+    .select("id")
+    .maybeSingle();
+  if (error) throw error;
+  return data !== null;
+}
+
+// Cria um perfil novo direto pelo diretório (auto-cadastro). Entra como status 'inativo'
+// (não recebe disparo no WhatsApp); publicado conforme o parâmetro.
+export async function criarPerfilDiretorio(params: {
+  nome: string;
+  categoria: string;
+  servicos: string[];
+  bairro: string | null;
+  cidade: string;
+  whatsapp: string;
+  email: string | null;
+  descricao: string | null;
+  segmentos: string[];
+  publicado: boolean;
+}): Promise<{ id: string; slug: string; editToken: string }> {
+  const slugBase = gerarSlug(params.nome);
+
+  // Tenta inserir com um slug único; em caso de colisão (código 23505), tenta de novo
+  // com outro sufixo aleatório.
+  for (let tentativa = 0; tentativa < 6; tentativa++) {
+    const slug = tentativa === 0 ? slugBase : `${slugBase}-${sufixoAleatorio()}`;
+    const { data, error } = await supabase
+      .from("fornecedores")
+      .insert({
+        nome: params.nome,
+        categoria: params.categoria,
+        servicos: params.servicos,
+        bairro: params.bairro,
+        cidade: params.cidade,
+        whatsapp: params.whatsapp,
+        email: params.email,
+        descricao: params.descricao,
+        segmentos: params.segmentos,
+        publicado: params.publicado,
+        status: "inativo",
+        slug,
+      })
+      .select("id, slug, edit_token")
+      .single();
+
+    if (!error) {
+      return { id: data.id as string, slug: data.slug as string, editToken: data.edit_token as string };
+    }
+    if ((error as { code?: string }).code !== "23505") throw error;
+  }
+
+  throw new Error("Não foi possível gerar um slug único para o perfil");
+}
+
+// ---- Painel /diretorio/admin ----
+
+export interface PerfilAdmin extends PerfilDiretorio {
+  email: string | null;
+  edit_token: string;
+  created_at: string;
+}
+
+export async function listarPerfisAdmin(): Promise<PerfilAdmin[]> {
+  const { data, error } = await supabase
+    .from("fornecedores")
+    .select(`${CAMPOS_PERFIL}, email, edit_token, created_at`)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as unknown as PerfilAdmin[];
+}
+
+export async function definirPublicado(id: string, publicado: boolean): Promise<void> {
+  const { error } = await supabase.from("fornecedores").update({ publicado }).eq("id", id);
   if (error) throw error;
 }

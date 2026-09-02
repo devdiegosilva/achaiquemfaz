@@ -28,6 +28,13 @@ function iniciais(nome: string): string {
   return letras.toUpperCase() || "?";
 }
 
+// "Manaíra" -> "Manaíra, João Pessoa" · "João Pessoa" (cidade toda) -> "João Pessoa (cidade toda)"
+function rotuloLocal(bairro: string | null | undefined): string {
+  if (!bairro) return "";
+  if (bairro === "João Pessoa") return "João Pessoa (cidade toda)";
+  return `${bairro}, João Pessoa`;
+}
+
 function linkWhatsapp(whatsapp: string, nome: string): string {
   const numero = whatsapp.replace(/\D/g, "");
   const texto = `Olá, ${nome}! Vi seu perfil no Achaí Quem Faz e gostaria de um orçamento.`;
@@ -239,7 +246,7 @@ diretorioRouter.get("/busca", async (req, res) => {
           <span class="avatar" aria-hidden="true">${escaparHtml(iniciais(p.nome))}</span>
           <span><span class="nm">${escaparHtml(p.nome)}</span><br><span class="ct">${escaparHtml(rotuloCategoria(p.categoria))}</span></span>
         </div>
-        ${p.bairro ? `<span class="loc">${ICONE_PIN} ${escaparHtml(p.bairro)}, João Pessoa</span>` : ""}
+        ${p.bairro ? `<span class="loc">${ICONE_PIN} ${escaparHtml(rotuloLocal(p.bairro))}</span>` : ""}
         ${p.descricao ? `<p class="dsc">${escaparHtml(p.descricao)}</p>` : ""}
         ${tags ? `<div class="tags">${tags}</div>` : ""}
         <a class="btn btn-primary btn-block" href="${escaparHtml(linkWhatsapp(p.whatsapp, p.nome))}" target="_blank" rel="noopener">${ICONE_WA} Chamar no WhatsApp</a>
@@ -316,7 +323,7 @@ diretorioRouter.get("/p/:slug", async (req, res) => {
 
   const servicos = (perfil.servicos ?? []).filter(Boolean);
   const segmentosTxt = (perfil.segmentos ?? []).map(rotuloSegmento).join(" e ");
-  const localTxt = [perfil.bairro, perfil.cidade].filter(Boolean).join(", ");
+  const localTxt = rotuloLocal(perfil.bairro) || perfil.cidade || "";
   const ano = perfil.created_at ? new Date(perfil.created_at).getFullYear() : null;
   const wa = linkWhatsapp(perfil.whatsapp, perfil.nome);
 
@@ -361,7 +368,7 @@ diretorioRouter.get("/p/:slug", async (req, res) => {
         ${
           perfil.bairro || segmentosTxt
             ? `<div class="pdp-sec"><h2>Área de atendimento</h2><div class="areas">
-                ${perfil.bairro ? `<span class="tag">${escaparHtml(perfil.bairro)}</span>` : ""}
+                ${perfil.bairro ? `<span class="tag">${escaparHtml(perfil.bairro === "João Pessoa" ? "João Pessoa — cidade toda" : perfil.bairro)}</span>` : ""}
                 ${(perfil.segmentos ?? []).map((s) => `<span class="tag">${escaparHtml(rotuloSegmento(s))}</span>`).join("")}
               </div></div>`
             : ""
@@ -372,7 +379,7 @@ diretorioRouter.get("/p/:slug", async (req, res) => {
       <aside class="buybox">
         <span class="lbl">Contato direto</span>
         <div class="nm">${escaparHtml(perfil.nome)}</div>
-        <div class="sb">${escaparHtml(rotuloCategoria(perfil.categoria))}${perfil.bairro ? ` · ${escaparHtml(perfil.bairro)}` : ""}</div>
+        <div class="sb">${escaparHtml(rotuloCategoria(perfil.categoria))}${perfil.bairro ? ` · ${escaparHtml(perfil.bairro === "João Pessoa" ? "cidade toda" : perfil.bairro)}` : ""}</div>
         <a class="btn btn-primary btn-block btn-lg" href="${escaparHtml(wa)}" target="_blank" rel="noopener">${ICONE_WA} Chamar no WhatsApp</a>
         <p class="note">A Achaí Quem Faz não intermedia pagamento nem execução do serviço. Combine tudo direto com o profissional.</p>
         <a class="rep" href="https://instagram.com/achaiquemfaz" target="_blank" rel="noopener">Algo errado neste perfil?</a>

@@ -3,10 +3,12 @@ import { paginaSite, escaparHtml } from "../services/html";
 import { buscarPerfilPorToken, atualizarPerfilPorToken } from "../services/supabase";
 import {
   CSS_FORM_DIRETORIO,
-  opcoesCategoria,
+  campoCategoria,
+  campoBairro,
   checkboxesSegmento,
   parseServicos,
   parseSegmentos,
+  JS_CATEGORIA_OUTRO,
 } from "../services/diretorioCampos";
 import type { PerfilDiretorio } from "../types";
 
@@ -45,10 +47,7 @@ function paginaFormulario(perfil: PerfilDiretorio, token: string, opts: { erro?:
           <input type="text" value="${escaparHtml(perfil.nome)}" disabled />
           <p class="hint">Para mudar o nome, fale com a gente pelo Instagram.</p>
         </div>
-        <div class="fld">
-          <label for="categoria">Serviço principal</label>
-          <select id="categoria" name="categoria" required>${opcoesCategoria(perfil.categoria)}</select>
-        </div>
+        ${campoCategoria(perfil.categoria)}
         <div class="fld">
           <label for="servicos">O que você faz — um por linha</label>
           <textarea id="servicos" name="servicos" placeholder="Instalação de chuveiro&#10;Troca de tomadas&#10;Reparo de vazamento">${escaparHtml(servicosTexto)}</textarea>
@@ -57,10 +56,7 @@ function paginaFormulario(perfil: PerfilDiretorio, token: string, opts: { erro?:
           <label for="descricao">Sobre você</label>
           <textarea id="descricao" name="descricao" placeholder="Sua experiência, anos de atuação, o que te diferencia.">${escaparHtml(perfil.descricao)}</textarea>
         </div>
-        <div class="fld">
-          <label for="bairro">Bairro onde atua</label>
-          <input type="text" id="bairro" name="bairro" value="${escaparHtml(perfil.bairro)}" placeholder="Ex: Manaíra" />
-        </div>
+        ${campoBairro(perfil.bairro ?? "")}
         <div class="fld">
           <label>Atende</label>
           <div class="chk-row">${checkboxesSegmento(perfil.segmentos ?? ["casa", "condominio"])}</div>
@@ -74,6 +70,7 @@ function paginaFormulario(perfil: PerfilDiretorio, token: string, opts: { erro?:
         <button type="submit" class="btn btn-primary btn-block btn-lg" style="margin-top:24px">Salvar</button>
       </form>
     </div>
+    <script>${JS_CATEGORIA_OUTRO}</script>
   `;
 
   return paginaSite({ titulo: "Editar perfil", secoes, cssExtra: CSS_FORM_DIRETORIO, largura: "estreita" });
@@ -99,12 +96,20 @@ diretorioEditarRouter.post("/", async (req, res) => {
 
   const segmentos = parseSegmentos(req.body?.segmentos);
 
-  if (typeof categoria !== "string" || !categoria.trim()) {
+  let categoriaFinal = typeof categoria === "string" ? categoria.trim() : "";
+  if (categoriaFinal === "outro") {
+    const outra = typeof req.body?.categoriaOutra === "string" ? req.body.categoriaOutra.trim() : "";
+    if (!outra) {
+      return res.status(400).send(paginaFormulario(perfil, token, { erro: "Diga qual serviço você presta." }));
+    }
+    categoriaFinal = outra.toLowerCase();
+  }
+  if (!categoriaFinal) {
     return res.status(400).send(paginaFormulario(perfil, token, { erro: "Escolha o serviço principal." }));
   }
 
   const campos = {
-    categoria: categoria.trim(),
+    categoria: categoriaFinal,
     descricao: typeof descricao === "string" && descricao.trim() ? descricao.trim() : null,
     servicos: parseServicos(servicos),
     bairro: typeof bairro === "string" && bairro.trim() ? bairro.trim() : null,

@@ -4,16 +4,25 @@ import { criarPerfilDiretorio } from "../services/supabase";
 import { env } from "../config/env";
 import {
   CSS_FORM_DIRETORIO,
-  opcoesCategoria,
+  campoCategoria,
+  campoBairro,
   checkboxesSegmento,
   parseServicos,
   parseSegmentos,
   somenteDigitos,
+  JS_CATEGORIA_OUTRO,
 } from "../services/diretorioCampos";
 
 export const diretorioCadastroRouter = Router();
 
-const OPCIONAL = `<span style="font-weight:400;color:var(--text-subtle)">(opcional)</span>`;
+// Resolve a categoria final a partir do body (trata a opção "Outro").
+function resolverCategoria(body: Record<string, unknown>): { categoria: string; erro?: string } {
+  const escolhida = typeof body.categoria === "string" ? body.categoria.trim() : "";
+  if (escolhida !== "outro") return { categoria: escolhida };
+  const outra = typeof body.categoriaOutra === "string" ? body.categoriaOutra.trim() : "";
+  if (!outra) return { categoria: "", erro: "Diga qual serviço você presta." };
+  return { categoria: outra.toLowerCase() };
+}
 
 function paginaFormulario(erro?: string, valores: Record<string, string> = {}): string {
   const v = (campo: string) => escaparHtml(valores[campo] ?? "");
@@ -49,24 +58,18 @@ function paginaFormulario(erro?: string, valores: Record<string, string> = {}): 
             </div>
           </div>
           <div class="fld">
-            <label for="email">E-mail ${OPCIONAL}</label>
-            <input type="email" id="email" name="email" value="${v("email")}" />
-            <p class="hint">Só pra gente te mandar recados. Não aparece no perfil.</p>
+            <label for="email">E-mail</label>
+            <input type="email" id="email" name="email" value="${v("email")}" required />
+            <p class="hint">Só pra gente te mandar recados. <strong>Não aparece no seu perfil.</strong></p>
           </div>
         </section>
 
         <section class="wstep">
           <h2>O que você faz</h2>
           <p class="stepdesc">Escolha o serviço principal e liste o que você atende.</p>
+          ${campoCategoria(valores.categoria ?? "")}
           <div class="fld">
-            <label for="categoria">Serviço principal</label>
-            <select id="categoria" name="categoria" required>
-              <option value="">Selecione…</option>
-              ${opcoesCategoria(valores.categoria ?? "")}
-            </select>
-          </div>
-          <div class="fld">
-            <label for="servicos">O que você faz ${OPCIONAL} — um por linha</label>
+            <label for="servicos">O que você faz <span style="font-weight:400;color:var(--text-subtle)">(opcional)</span> — um por linha</label>
             <textarea id="servicos" name="servicos" placeholder="Instalação de chuveiro&#10;Troca de tomadas&#10;Reparo de vazamento">${v("servicos")}</textarea>
           </div>
           <div class="fld">
@@ -78,18 +81,14 @@ function paginaFormulario(erro?: string, valores: Record<string, string> = {}): 
         <section class="wstep">
           <h2>Onde você atua</h2>
           <p class="stepdesc">O bairro ajuda o cliente a te achar na busca.</p>
-          <div class="fld">
-            <label for="bairro">Bairro ${OPCIONAL}</label>
-            <input type="text" id="bairro" name="bairro" value="${v("bairro")}" placeholder="Ex: Manaíra" />
-            <p class="hint">Em João Pessoa. Você pode atender outros bairros também.</p>
-          </div>
+          ${campoBairro(valores.bairro ?? "")}
         </section>
 
         <section class="wstep">
           <h2>Sobre você</h2>
           <p class="stepdesc">Um texto curto que passa confiança pro cliente.</p>
           <div class="fld">
-            <label for="descricao">Sua apresentação ${OPCIONAL}</label>
+            <label for="descricao">Sua apresentação <span style="font-weight:400;color:var(--text-subtle)">(opcional)</span></label>
             <textarea id="descricao" name="descricao" placeholder="Experiência, anos de atuação, o que te diferencia, garantia do serviço.">${v("descricao")}</textarea>
           </div>
         </section>
@@ -100,17 +99,18 @@ function paginaFormulario(erro?: string, valores: Record<string, string> = {}): 
           <dl class="wiz-resumo">
             <div><dt>Nome</dt><dd data-r="nome">—</dd></div>
             <div><dt>WhatsApp</dt><dd data-r="whatsapp">—</dd></div>
+            <div><dt>E-mail</dt><dd data-r="email">—</dd></div>
             <div><dt>Serviço</dt><dd data-r="categoria">—</dd></div>
             <div><dt>Bairro</dt><dd data-r="bairro">—</dd></div>
           </dl>
           <p class="hint">Ao cadastrar, seu perfil ${confirmaEntra}. Você recebe um link só seu pra editar depois.</p>
+          <button type="submit" class="btn btn-primary btn-block btn-lg" style="margin-top:18px">Cadastrar</button>
         </section>
 
         <div class="wiz-nav" hidden>
           <button type="button" class="btn btn-ghost wiz-back" hidden>← Voltar</button>
           <button type="button" class="btn btn-primary wiz-next">Continuar</button>
         </div>
-        <button type="submit" class="btn btn-primary btn-block btn-lg wiz-go">Cadastrar</button>
       </form>
     </div>
     <script>
@@ -133,7 +133,6 @@ function paginaFormulario(erro?: string, valores: Record<string, string> = {}): 
         var nav = f.querySelector(".wiz-nav");
         var back = f.querySelector(".wiz-back");
         var next = f.querySelector(".wiz-next");
-        var go = f.querySelector(".wiz-go");
         var titulos = ["Dados básicos", "Serviços", "Localização", "Sobre você", "Confirmar"];
         var i = 0;
 
@@ -143,7 +142,10 @@ function paginaFormulario(erro?: string, valores: Record<string, string> = {}): 
 
         function resumo() {
           [].slice.call(f.querySelectorAll("[data-r]")).forEach(function (dd) {
-            var el = f.querySelector('[name="' + dd.getAttribute("data-r") + '"]');
+            var name = dd.getAttribute("data-r");
+            var el = name === "categoria" && f.querySelector('#categoria').value === "outro"
+              ? f.querySelector('[name="categoriaOutra"]')
+              : f.querySelector('[name="' + name + '"]');
             var val = "";
             if (el) val = el.tagName === "SELECT" ? (el.options[el.selectedIndex] || {}).text || "" : el.value;
             dd.textContent = (val || "").trim() || "—";
@@ -155,13 +157,13 @@ function paginaFormulario(erro?: string, valores: Record<string, string> = {}): 
           if (num) num.textContent = "Etapa " + (i + 1) + " de " + steps.length + " · " + titulos[i];
           if (back) back.hidden = i === 0;
           if (next) next.hidden = i === steps.length - 1;
-          if (go) go.hidden = i !== steps.length - 1;
           if (i === steps.length - 1) resumo();
           if (scroll) f.scrollIntoView({ block: "start" });
         }
         function valida(step) {
           var els = step.querySelectorAll("input, select, textarea");
           for (var j = 0; j < els.length; j++) {
+            if (els[j].offsetParent === null && els[j].type !== "hidden") continue;
             if (!els[j].checkValidity()) { els[j].reportValidity(); return false; }
           }
           return true;
@@ -174,6 +176,7 @@ function paginaFormulario(erro?: string, valores: Record<string, string> = {}): 
         });
         render(false);
       })();
+      ${JS_CATEGORIA_OUTRO}
     </script>
   `;
 
@@ -206,9 +209,9 @@ diretorioCadastroRouter.post("/", async (req, res) => {
   const nome = typeof body.nome === "string" ? body.nome.trim() : "";
   const whatsappBruto = typeof body.whatsapp === "string" ? body.whatsapp : "";
   const email = typeof body.email === "string" ? body.email.trim() : "";
-  const categoria = typeof body.categoria === "string" ? body.categoria.trim() : "";
   const bairro = typeof body.bairro === "string" ? body.bairro.trim() : "";
   const descricao = typeof body.descricao === "string" ? body.descricao.trim() : "";
+  const { categoria, erro: erroCategoria } = resolverCategoria(body);
 
   const valores: Record<string, string> = {
     nome,
@@ -222,10 +225,13 @@ diretorioCadastroRouter.post("/", async (req, res) => {
 
   const whatsappDigitos = somenteDigitos(whatsappBruto);
 
-  if (!nome || !categoria || whatsappDigitos.length < 10 || whatsappDigitos.length > 11) {
+  if (erroCategoria) {
+    return res.status(400).send(paginaFormulario(erroCategoria, valores));
+  }
+  if (!nome || !categoria || !email || whatsappDigitos.length < 10 || whatsappDigitos.length > 11) {
     return res
       .status(400)
-      .send(paginaFormulario("Preencha nome, WhatsApp válido (com DDD) e o serviço principal.", valores));
+      .send(paginaFormulario("Preencha nome, WhatsApp válido (com DDD), e-mail e o serviço principal.", valores));
   }
 
   try {
@@ -236,7 +242,7 @@ diretorioCadastroRouter.post("/", async (req, res) => {
       bairro: bairro || null,
       cidade: "João Pessoa",
       whatsapp: `55${whatsappDigitos}`,
-      email: email || null,
+      email,
       descricao: descricao || null,
       segmentos: parseSegmentos(body.segmentos),
       // Lançamento: publica na hora. Quando exigir assinatura, entra despublicado

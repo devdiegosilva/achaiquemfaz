@@ -1,4 +1,4 @@
-import { CATEGORIAS_CASA_CONDOMINIO, SEGMENTOS } from "../types";
+import { CATEGORIAS_CASA_CONDOMINIO, SEGMENTOS, BAIRROS_JOAO_PESSOA, BAIRRO_CIDADE_TODA } from "../types";
 import { escaparHtml } from "./html";
 
 // CSS compartilhado pelos formulários do diretório (cadastro em etapas e edição via magic link).
@@ -46,24 +46,82 @@ export const CSS_FORM_DIRETORIO = `
   .wstep .stepdesc { color: var(--text-muted); font-size: 0.9rem; margin: 0 0 20px; }
   .wiz.js .wstep[hidden] { display: none; }
   .wiz-nav { display: flex; justify-content: space-between; gap: 10px; margin-top: 26px; }
+  .wiz-next { margin-left: auto; }
   .wiz-resumo { display: grid; gap: 0; margin: 4px 0 18px; }
   .wiz-resumo > div { display: flex; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--border); padding: 9px 0; font-size: 0.92rem; }
   .wiz-resumo dt { color: var(--text-subtle); margin: 0; }
   .wiz-resumo dd { margin: 0; color: var(--text); font-weight: 500; text-align: right; }
 `;
 
-// Lista de <option> de categorias (foco casa e condomínio). Inclui a categoria atual
-// mesmo que ela não esteja na lista base (ex: cadastro antigo com categoria "outro").
-export function opcoesCategoria(atual: string): string {
+// Bloco .fld do serviço principal: select da lista casa/condomínio + opção "Outro",
+// que revela um campo de texto livre (ver JS_CATEGORIA_OUTRO). `atual` pode ser uma
+// categoria da lista, uma categoria personalizada antiga, ou vazio.
+export function campoCategoria(atual: string): string {
   const chaves = Object.keys(CATEGORIAS_CASA_CONDOMINIO);
-  const opcoes = chaves.map(
-    (c) =>
-      `<option value="${escaparHtml(c)}"${c === atual ? " selected" : ""}>${escaparHtml(CATEGORIAS_CASA_CONDOMINIO[c])}</option>`
+  const ehCustom = Boolean(atual) && atual !== "outro" && !chaves.includes(atual);
+  const selecionado = ehCustom ? "outro" : atual;
+  const textoOutro = ehCustom ? atual : "";
+
+  const opts = chaves
+    .map(
+      (c) =>
+        `<option value="${escaparHtml(c)}"${c === selecionado ? " selected" : ""}>${escaparHtml(CATEGORIAS_CASA_CONDOMINIO[c])}</option>`
+    )
+    .join("");
+
+  return `
+    <div class="fld">
+      <label for="categoria">Serviço principal</label>
+      <select id="categoria" name="categoria" required>
+        <option value="">Selecione…</option>
+        ${opts}
+        <option value="outro"${selecionado === "outro" ? " selected" : ""}>Outro — cadastrar novo serviço</option>
+      </select>
+    </div>
+    <div class="fld" id="fld-cat-outro"${selecionado === "outro" ? "" : " hidden"}>
+      <label for="categoriaOutra">Qual serviço você presta?</label>
+      <input type="text" id="categoriaOutra" name="categoriaOutra" value="${escaparHtml(textoOutro)}" placeholder="Ex: instalador de películas" />
+    </div>
+  `;
+}
+
+// JS que mostra/esconde o campo "categoriaOutra" conforme o select. Colar uma vez por página.
+export const JS_CATEGORIA_OUTRO = `
+  (function () {
+    var sel = document.getElementById("categoria");
+    var box = document.getElementById("fld-cat-outro");
+    var inp = document.getElementById("categoriaOutra");
+    if (!sel || !box) return;
+    function sync() {
+      var on = sel.value === "outro";
+      box.hidden = !on;
+      if (inp) { inp.required = on; if (!on) inp.value = ""; }
+    }
+    sel.addEventListener("change", sync);
+    sync();
+  })();
+`;
+
+// Bloco .fld de bairro: lista fechada de bairros de João Pessoa + "cidade toda". Opcional.
+export function campoBairro(atual: string): string {
+  const opts = BAIRROS_JOAO_PESSOA.map(
+    (b) => `<option value="${escaparHtml(b)}"${b === atual ? " selected" : ""}>${escaparHtml(b)}</option>`
   );
-  if (atual && !chaves.includes(atual)) {
-    opcoes.unshift(`<option value="${escaparHtml(atual)}" selected>${escaparHtml(atual)}</option>`);
+  // bairro antigo digitado à mão que não está na lista
+  if (atual && atual !== BAIRRO_CIDADE_TODA && !BAIRROS_JOAO_PESSOA.includes(atual)) {
+    opts.push(`<option value="${escaparHtml(atual)}" selected>${escaparHtml(atual)}</option>`);
   }
-  return opcoes.join("");
+  return `
+    <div class="fld">
+      <label for="bairro">Bairro onde atua <span style="font-weight:400;color:var(--text-subtle)">(opcional)</span></label>
+      <select id="bairro" name="bairro">
+        <option value="">Prefiro não informar</option>
+        <option value="${escaparHtml(BAIRRO_CIDADE_TODA)}"${atual === BAIRRO_CIDADE_TODA ? " selected" : ""}>João Pessoa — atendo a cidade toda</option>
+        ${opts.join("")}
+      </select>
+      <p class="hint">Ajuda o cliente a te achar na busca por bairro.</p>
+    </div>
+  `;
 }
 
 // Checkboxes de segmento (casa / condomínio), no estilo "pill".

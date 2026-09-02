@@ -366,6 +366,8 @@ const CSS_SITE = `
     .flt-acc > summary { display: block; font-family: var(--font-mono); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; padding: 11px 0; cursor: pointer; }
     .flt-acc[open] > .fbody { max-height: 60vh; overflow-y: auto; padding-bottom: 10px; }
     .pdp { grid-template-columns: 1fr; }
+    .pdp-id { align-items: flex-start; gap: 14px; }
+    .pdp-id .avatar.lg { width: 60px; height: 60px; font-size: 1.4rem; }
     .buybox { display: none; }
     .mobile-cta { display: flex; position: sticky; bottom: 0; gap: 10px; padding: 12px 16px; background: var(--surface); border-top: 1px solid var(--border-strong); box-shadow: 0 -4px 14px -6px rgba(18,28,22,.12); z-index: 10; }
     .mobile-cta .btn { flex: 1; }

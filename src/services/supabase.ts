@@ -218,7 +218,14 @@ export async function buscarPerfisPublicados(filtros: FiltrosDiretorio = {}): Pr
   let query = supabase.from("fornecedores").select(CAMPOS_PERFIL).eq("publicado", true);
 
   if (filtros.categoria) query = query.eq("categoria", filtros.categoria);
-  if (filtros.bairro) query = query.ilike("bairro", `%${filtros.bairro}%`);
+  if (filtros.bairro) {
+    // Quem atende a cidade toda (bairro = "João Pessoa") aparece em qualquer busca por bairro.
+    const b = filtros.bairro.replace(/[,()*]/g, " ").trim();
+    query =
+      b && b !== "João Pessoa"
+        ? query.or(`bairro.ilike.*${b}*,bairro.eq.João Pessoa`)
+        : query.ilike("bairro", `%${b}%`);
+  }
   if (filtros.segmento) query = query.contains("segmentos", [filtros.segmento]);
 
   const termo = filtros.termo ? limparTermo(filtros.termo) : "";

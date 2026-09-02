@@ -390,8 +390,22 @@ export function paginaSite(opts: {
   cssExtra?: string;
   metaDescricao?: string;
   largura?: "ampla" | "estreita";
+  // Evento de página para o analytics (/aqf.js) disparar no load. Ex:
+  // { tipo: "busca", servico, bairro, resultados_count } ou { tipo: "perfil_visto", profissional_slug }.
+  evento?: Record<string, unknown>;
 }): string {
   const menuBurger = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>`;
+
+  // JSON seguro para dentro de <script>: neutraliza "<" (fecha-tag) e os separadores de
+  // linha U+2028/U+2029 (válidos em JSON, quebram um <script>).
+  const eventoJson = opts.evento
+    ? Array.from(JSON.stringify(opts.evento), (ch) => {
+        const code = ch.charCodeAt(0);
+        return code === 0x3c || code === 0x2028 || code === 0x2029
+          ? "\\u" + code.toString(16).padStart(4, "0")
+          : ch;
+      }).join("")
+    : "";
 
   const corpo = `<div class="site">
   <header class="hd">
@@ -417,7 +431,9 @@ export function paginaSite(opts: {
     <span>Achaí Quem Faz · João Pessoa · PB</span>
     <span><a href="/cadastro">Sou fornecedor</a> · <a href="/#como-funciona">Como funciona</a> · <a href="https://instagram.com/achaiquemfaz" target="_blank" rel="noopener">@achaiquemfaz</a></span>
   </footer>
-</div>`;
+</div>
+${eventoJson ? `<script>window.__aqfEvento=${eventoJson};</script>` : ""}
+<script src="/aqf.js" defer></script>`;
 
   return documento(opts.titulo, `${CSS_SITE}${opts.cssExtra ? `\n${opts.cssExtra}` : ""}`, corpo, opts.metaDescricao);
 }

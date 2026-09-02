@@ -4,12 +4,24 @@ import { diretorioRouter } from "./routes/diretorio";
 import { diretorioCadastroRouter } from "./routes/diretorioCadastro";
 import { diretorioEditarRouter } from "./routes/diretorioEditar";
 import { diretorioAdminRouter } from "./routes/diretorioAdmin";
+import { eventosRouter } from "./routes/eventos";
+import { TRACK_JS } from "./services/trackScript";
 
 const app = express();
+// Atrás do proxy da Railway — sem isto req.ip é o IP do proxy (rate limit vira global).
+app.set("trust proxy", 1);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.get("/health", (_req, res) => res.json({ status: "ok" }));
+
+// Analytics próprio.
+app.get("/aqf.js", (_req, res) => {
+  res.type("application/javascript");
+  res.set("Cache-Control", "public, max-age=3600");
+  res.send(TRACK_JS);
+});
+app.use("/api", eventosRouter);
 
 // O diretório é o produto e vive na raiz. A ordem importa: rotas específicas
 // (/cadastro, /editar, /admin) antes de "/", que tem a curinga /p/:slug.

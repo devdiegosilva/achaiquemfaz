@@ -94,6 +94,25 @@ mandar o magic link). Quando `true`, aparece um selo "Contato verificado" no per
 cards da busca. Verificação automática (OTP) fica para quando o dashboard com login for
 construído.
 
+**Analytics próprio (sem GA4/Mixpanel para o funil):** tabela `eventos` no Supabase,
+alimentada 100% pelo client (`/aqf.js`, injetado por `paginaSite`) via `POST /api/eventos`.
+- Eventos: `busca` (com `servico`, `bairro`, `resultados_count` — **inclusive 0**),
+  `perfil_visto` (`profissional_slug`), `whatsapp_clicado` (`profissional_slug` + `contexto`
+  = `card_busca` | `perfil`, enviado por `navigator.sendBeacon` antes da navegação).
+- `session_id` (uuid em `localStorage.aqf_sid`) + atribuição first-touch em
+  `localStorage.aqf_attr` (`utm_source` nunca null → param, senão host do referrer, senão
+  `'direto'`). `localStorage.aqf_interno = "1"` marca o navegador como interno (excluído).
+- `POST /api/eventos`: valida `tipo`, rate-limit por IP em memória (60/min), ignora
+  user-agent de bot, sempre responde `204`, insert fire-and-forget. `app.set("trust proxy", 1)`
+  no `index.ts` pro `req.ip` real atrás do proxy.
+- `GET /admin/metricas?chave=…&periodo=7d|30d` — mesma auth do `/admin`. Tabelas (sem
+  gráficos): **demanda não atendida** (buscas com 0 resultado, por serviço+bairro — no topo),
+  totais, taxas (calculadas sobre **buscas únicas por sessão**, não eventos crus),
+  demanda atendida, profissionais (ordenado por cliques asc), origem. Agregação em JS;
+  se o volume crescer, mover para view SQL — a tabela `eventos` já dá o SQL cru.
+- GA4 (gtag) continua carregado em todas as páginas via `FONTES_E_GA`, em paralelo.
+- Migração: `db/migracao_eventos.sql`.
+
 **Ainda pendente no diretório** (nesta ordem, combinado em 2026-09-02):
 1. Avaliações / estrelas (schema novo, quem pode avaliar, moderação).
 2. Dashboard do profissional (exige login/autenticação — não existe hoje). O login por
@@ -146,12 +165,18 @@ src/
     diretorio.ts            # [diretório] home (/), busca (/busca), perfil (/p/:slug)
     diretorioCadastro.ts    # [diretório] auto-cadastro em 5 etapas (/cadastro)
     diretorioEditar.ts      # [diretório] edição de perfil via magic link (/editar)
-    diretorioAdmin.ts       # [diretório] painel gated por ADMIN_CHAVE (/admin)
+    diretorioAdmin.ts       # [diretório] painel + /admin/metricas, gated por ADMIN_CHAVE
+    eventos.ts              # [analytics] POST /api/eventos
+  services/ ...
+    eventos.ts              # [analytics] insert + rate limit + filtro de bot
+    metricas.ts             # [analytics] fetch + agregação do funil
+    trackScript.ts          # [analytics] JS do client servido em GET /aqf.js
   types/index.ts            # tipos, categorias (base + casa/condomínio), lista de bairros de João Pessoa
 db/
   schema.sql               # schema completo das tabelas
   migracao_diretorio.sql   # migração aditiva do módulo diretório (aplicada em 2026-09-02)
   migracao_verificacao.sql # coluna telefone_verificado
+  migracao_eventos.sql     # tabela eventos (analytics)
 ```
 
 ## Setup local

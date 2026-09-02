@@ -57,6 +57,28 @@ create table if not exists demandas_notificacoes (
   enviado_em timestamptz not null default now()
 );
 
+-- Analytics próprio do diretório. Todo evento vem do client (/aqf.js) via POST /api/eventos.
+-- `interno = true` marca tráfego de teste do próprio time (excluído nas métricas).
+create table if not exists eventos (
+  id uuid primary key default gen_random_uuid(),
+  criado_em timestamptz not null default now(),
+  tipo text not null check (tipo in ('busca', 'perfil_visto', 'whatsapp_clicado')),
+  servico text,
+  bairro text,
+  profissional_slug text,
+  resultados_count int,                                  -- só para tipo = 'busca'
+  contexto text check (contexto in ('card_busca', 'perfil') or contexto is null),
+  session_id text not null,
+  utm_source text,
+  utm_medium text,
+  utm_campaign text,
+  referrer text,
+  user_agent text,
+  interno boolean not null default false
+);
+create index if not exists idx_eventos_tipo_criado on eventos (tipo, criado_em);
+create index if not exists idx_eventos_slug on eventos (profissional_slug);
+
 -- Guarda, por demandante (identificado pelo WhatsApp), uma conversa em aberto: a IA fez
 -- uma pergunta de esclarecimento e está esperando resposta. Zerado assim que a demanda é
 -- resolvida (fornecedor encontrado ou não). Se ninguém responder em 72h, o contexto expira

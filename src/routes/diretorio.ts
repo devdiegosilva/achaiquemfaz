@@ -256,7 +256,7 @@ diretorioRouter.get("/busca", async (req, res) => {
         ${p.bairro ? `<span class="loc">${ICONE_PIN} ${escaparHtml(rotuloLocal(p.bairro))}</span>` : ""}
         ${p.descricao ? `<p class="dsc">${escaparHtml(p.descricao)}</p>` : ""}
         ${tags ? `<div class="tags">${tags}</div>` : ""}
-        <a class="btn btn-primary btn-block" href="${escaparHtml(linkWhatsapp(p.whatsapp, p.nome))}" target="_blank" rel="noopener">${ICONE_WA} Chamar no WhatsApp</a>
+        <a class="btn btn-primary btn-block" data-wa="${escaparHtml(p.slug)}" data-wa-ctx="card_busca" href="${escaparHtml(linkWhatsapp(p.whatsapp, p.nome))}" target="_blank" rel="noopener">${ICONE_WA} Chamar no WhatsApp</a>
       </article>`;
     })
     .join("");
@@ -305,6 +305,12 @@ diretorioRouter.get("/busca", async (req, res) => {
       largura: "ampla",
       metaDescricao:
         "Profissionais para casa e condomínio em João Pessoa. Filtre por serviço e bairro e fale direto no WhatsApp.",
+      evento: {
+        tipo: "busca",
+        servico: categoria || q || null,
+        bairro: bairro || null,
+        resultados_count: perfis.length,
+      },
     })
   );
 });
@@ -388,14 +394,14 @@ diretorioRouter.get("/p/:slug", async (req, res) => {
         <span class="lbl">Contato direto</span>
         <div class="nm">${escaparHtml(perfil.nome)}</div>
         <div class="sb">${escaparHtml(rotuloCategoria(perfil.categoria))}${perfil.bairro ? ` · ${escaparHtml(perfil.bairro === "João Pessoa" ? "cidade toda" : perfil.bairro)}` : ""}</div>
-        <a class="btn btn-primary btn-block btn-lg" href="${escaparHtml(wa)}" target="_blank" rel="noopener">${ICONE_WA} Chamar no WhatsApp</a>
+        <a class="btn btn-primary btn-block btn-lg" data-wa="${escaparHtml(perfil.slug)}" data-wa-ctx="perfil" href="${escaparHtml(wa)}" target="_blank" rel="noopener">${ICONE_WA} Chamar no WhatsApp</a>
         ${perfil.telefone_verificado ? `<p style="margin-top:12px">${SELO_VERIFICADO}</p>` : ""}
         <p class="note">A Achaí Quem Faz não intermedia pagamento nem execução do serviço. Combine tudo direto com o profissional.</p>
         <a class="rep" href="https://instagram.com/achaiquemfaz" target="_blank" rel="noopener">Algo errado neste perfil?</a>
       </aside>
     </div>
     <div class="mobile-cta">
-      <a class="btn btn-primary btn-lg" href="${escaparHtml(wa)}" target="_blank" rel="noopener">${ICONE_WA} Chamar no WhatsApp</a>
+      <a class="btn btn-primary btn-lg" data-wa="${escaparHtml(perfil.slug)}" data-wa-ctx="perfil" href="${escaparHtml(wa)}" target="_blank" rel="noopener">${ICONE_WA} Chamar no WhatsApp</a>
     </div>
   `;
 
@@ -404,6 +410,7 @@ diretorioRouter.get("/p/:slug", async (req, res) => {
       titulo: `${perfil.nome} — ${rotuloCategoria(perfil.categoria)}`,
       secoes,
       metaDescricao: `${perfil.nome}: ${rotuloCategoria(perfil.categoria)} em ${localTxt || "João Pessoa"}. Contato direto no WhatsApp pelo Achaí Quem Faz.`,
+      evento: { tipo: "perfil_visto", profissional_slug: perfil.slug },
     })
   );
 });

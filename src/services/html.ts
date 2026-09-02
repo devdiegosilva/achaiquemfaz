@@ -223,6 +223,7 @@ const CSS_SITE = `
   .btn-lg { font-size: 1rem; padding: 13px 22px; }
   .btn-block { width: 100%; }
   .btn svg { width: 18px; height: 18px; flex-shrink: 0; }
+  .btn[hidden] { display: none; }
 
   /* ---- header ---- */
   .hd { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 14px clamp(16px, 4vw, 32px); border-bottom: 1px solid var(--border); background: var(--surface); }
@@ -363,7 +364,7 @@ const CSS_SITE = `
     .rlayout { grid-template-columns: 1fr; }
     .flt-acc { border: 1px solid var(--border-strong); border-radius: var(--r-sm); padding: 2px 14px; background: var(--surface-2); }
     .flt-acc > summary { display: block; font-family: var(--font-mono); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; padding: 11px 0; cursor: pointer; }
-    .flt-acc[open] > .fbody { max-height: 300px; overflow-y: auto; padding-bottom: 10px; }
+    .flt-acc[open] > .fbody { max-height: 60vh; overflow-y: auto; padding-bottom: 10px; }
     .pdp { grid-template-columns: 1fr; }
     .buybox { display: none; }
     .mobile-cta { display: flex; position: sticky; bottom: 0; gap: 10px; padding: 12px 16px; background: var(--surface); border-top: 1px solid var(--border-strong); box-shadow: 0 -4px 14px -6px rgba(18,28,22,.12); z-index: 10; }

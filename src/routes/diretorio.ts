@@ -110,14 +110,14 @@ const PASSOS = `
 diretorioRouter.get("/", (_req, res) => {
   const catCards = HOME_CATS.map(
     (c) =>
-      `<a class="cat" href="/diretorio/busca?categoria=${encodeURIComponent(c)}"><span class="ic" aria-hidden="true">${iconeCategoria(c)}</span><span class="nm">${escaparHtml(rotuloCategoria(c))}</span></a>`
+      `<a class="cat" href="/busca?categoria=${encodeURIComponent(c)}"><span class="ic" aria-hidden="true">${iconeCategoria(c)}</span><span class="nm">${escaparHtml(rotuloCategoria(c))}</span></a>`
   ).join("");
 
   const secoes = `
     <section class="hero">
       <h1>Encontre quem faz o que você precisa.</h1>
       <p class="sub">Profissionais e empresas da sua região, prontos pra resolver o que você precisa em casa ou no condomínio.</p>
-      <form class="searchpanel" method="GET" action="/diretorio/busca" role="search">
+      <form class="searchpanel" method="GET" action="/busca" role="search">
         <label class="sp-field">
           ${ICONE_LUPA}
           <span class="col"><span class="lbl">O que você precisa?</span><input type="text" name="q" placeholder="Eletricista, encanador, pintor…" /></span>
@@ -154,7 +154,7 @@ diretorioRouter.get("/", (_req, res) => {
 });
 
 // =====================================================================
-// RESULTADOS  (GET /diretorio/busca)
+// RESULTADOS  (GET /busca)
 // =====================================================================
 type FiltrosUrl = { q?: string; categoria?: string; bairro?: string; segmento?: string; ordem?: string };
 
@@ -165,7 +165,7 @@ function montarBusca(atuais: FiltrosUrl, mudancas: FiltrosUrl = {}): string {
     if (v) p.set(k, v);
   }
   const s = p.toString();
-  return s ? `/diretorio/busca?${s}` : "/diretorio/busca";
+  return s ? `/busca?${s}` : "/busca";
 }
 
 diretorioRouter.get("/busca", async (req, res) => {
@@ -241,7 +241,7 @@ diretorioRouter.get("/busca", async (req, res) => {
       const tags = (p.segmentos ?? []).map((s) => `<span class="tag">${escaparHtml(rotuloSegmento(s))}</span>`).join("");
       return `
       <article class="pcard">
-        <a class="card-link" href="/diretorio/p/${escaparHtml(p.slug)}">Ver perfil de ${escaparHtml(p.nome)}</a>
+        <a class="card-link" href="/p/${escaparHtml(p.slug)}">Ver perfil de ${escaparHtml(p.nome)}</a>
         <div class="pcard-top">
           <span class="avatar" aria-hidden="true">${escaparHtml(iniciais(p.nome))}</span>
           <span><span class="nm">${escaparHtml(p.nome)}</span><br><span class="ct">${escaparHtml(rotuloCategoria(p.categoria))}</span></span>
@@ -263,7 +263,7 @@ diretorioRouter.get("/busca", async (req, res) => {
         ${
           temFiltro
             ? `<ul>
-                <li><a href="/diretorio/busca">Ver todos</a></li>
+                <li><a href="/busca">Ver todos</a></li>
                 ${bairro ? `<li><a href="${escaparHtml(montarBusca(atuais, { bairro: "" }))}">Buscar em toda João Pessoa</a></li>` : ""}
                 ${categoria ? `<li><a href="${escaparHtml(montarBusca(atuais, { categoria: "" }))}">Tirar o filtro de serviço</a></li>` : ""}
               </ul>`
@@ -273,7 +273,7 @@ diretorioRouter.get("/busca", async (req, res) => {
 
   const secoes = `
     <div class="rbar">
-      <form class="mini" method="GET" action="/diretorio/busca" role="search">
+      <form class="mini" method="GET" action="/busca" role="search">
         <input type="text" name="q" value="${escaparHtml(q)}" placeholder="Serviço" aria-label="Serviço" />
         <input type="text" name="bairro" value="${escaparHtml(bairro)}" placeholder="Bairro" aria-label="Bairro" />
         ${categoria ? `<input type="hidden" name="categoria" value="${escaparHtml(categoria)}" />` : ""}
@@ -315,7 +315,7 @@ diretorioRouter.get("/p/:slug", async (req, res) => {
         secoes: `<div style="padding:64px 24px;text-align:center">
           <h1 style="font-family:var(--font-head);font-weight:800;font-size:1.6rem">Perfil não encontrado</h1>
           <p style="color:var(--text-muted);margin-top:8px">Esse profissional não está mais publicado ou o endereço está errado.</p>
-          <p style="margin-top:22px"><a class="btn btn-primary" href="/diretorio/busca">Ver todos os profissionais</a></p>
+          <p style="margin-top:22px"><a class="btn btn-primary" href="/busca">Ver todos os profissionais</a></p>
         </div>`,
       })
     );
@@ -338,8 +338,8 @@ diretorioRouter.get("/p/:slug", async (req, res) => {
 
   const secoes = `
     <nav class="crumbs">
-      <a href="/diretorio">Início</a><span class="sep">/</span>
-      <a href="/diretorio/busca?categoria=${encodeURIComponent(perfil.categoria)}">${escaparHtml(rotuloCategoria(perfil.categoria))}</a><span class="sep">/</span>
+      <a href="/">Início</a><span class="sep">/</span>
+      <a href="/busca?categoria=${encodeURIComponent(perfil.categoria)}">${escaparHtml(rotuloCategoria(perfil.categoria))}</a><span class="sep">/</span>
       ${escaparHtml(perfil.nome)}
     </nav>
     <div class="pdp">

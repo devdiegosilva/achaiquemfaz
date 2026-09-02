@@ -35,11 +35,11 @@ function paginaFormulario(perfil: PerfilDiretorio, token: string, opts: { erro?:
       <p class="lead">Complete os dados. Enquanto "publicar" estiver desmarcado, seu perfil não aparece para ninguém.</p>
       ${
         opts.salvo
-          ? `<p class="form-ok">Perfil salvo!${perfil.publicado ? ` <a href="/diretorio/p/${escaparHtml(perfil.slug)}">Ver como ficou</a>` : ""}</p>`
+          ? `<p class="form-ok">Perfil salvo!${perfil.publicado ? ` <a href="/p/${escaparHtml(perfil.slug)}">Ver como ficou</a>` : ""}</p>`
           : ""
       }
       ${opts.erro ? `<p class="form-erro">${escaparHtml(opts.erro)}</p>` : ""}
-      <form method="POST" action="/diretorio/editar">
+      <form method="POST" action="/editar">
         <input type="hidden" name="token" value="${escaparHtml(token)}" />
 
         <div class="fld">

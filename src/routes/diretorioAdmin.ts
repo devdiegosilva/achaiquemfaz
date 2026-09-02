@@ -37,7 +37,7 @@ function render(perfis: Awaited<ReturnType<typeof listarPerfisAdmin>>, chave: st
 
   const linhas = perfis
     .map((p) => {
-      const linkEdicao = `${env.backendPublicUrl}/diretorio/editar?token=${p.edit_token}`;
+      const linkEdicao = `${env.backendPublicUrl}/editar?token=${p.edit_token}`;
       const convite = `Oi! O Achaí Quem Faz agora tem uma vitrine online de profissionais para casa e condomínio em João Pessoa. Quer que a gente publique seu perfil? É grátis. Confira e complete seus dados: ${linkEdicao}`;
       return `
       <tr>
@@ -45,13 +45,13 @@ function render(perfis: Awaited<ReturnType<typeof listarPerfisAdmin>>, chave: st
         <td style="font-family:var(--font-mono);font-size:0.8rem">${escaparHtml(p.whatsapp)}</td>
         <td>${p.publicado ? '<span class="st on">no ar</span>' : '<span class="st off">oculto</span>'}</td>
         <td>
-          <form class="inline" method="POST" action="/diretorio/admin/publicar">
+          <form class="inline" method="POST" action="/admin/publicar">
             <input type="hidden" name="chave" value="${escaparHtml(chave)}" />
             <input type="hidden" name="id" value="${escaparHtml(p.id)}" />
             <input type="hidden" name="publicado" value="${p.publicado ? "0" : "1"}" />
             <button type="submit">${p.publicado ? "Ocultar" : "Publicar"}</button>
           </form>
-          ${p.publicado ? `<a class="adm-ver" href="/diretorio/p/${escaparHtml(p.slug)}" target="_blank" rel="noopener">ver</a>` : ""}
+          ${p.publicado ? `<a class="adm-ver" href="/p/${escaparHtml(p.slug)}" target="_blank" rel="noopener">ver</a>` : ""}
         </td>
         <td class="mono">${escaparHtml(linkEdicao)}</td>
         <td class="mono">${escaparHtml(convite)}</td>
@@ -95,8 +95,8 @@ diretorioAdminRouter.post("/publicar", async (req, res) => {
 
   const id = typeof req.body?.id === "string" ? req.body.id : "";
   const publicado = req.body?.publicado === "1";
-  if (!id) return res.redirect(303, `/diretorio/admin?chave=${encodeURIComponent(chave)}`);
+  if (!id) return res.redirect(303, `/admin?chave=${encodeURIComponent(chave)}`);
 
   await definirPublicado(id, publicado).catch((erro) => console.error("Erro ao alterar publicado:", erro));
-  res.redirect(303, `/diretorio/admin?chave=${encodeURIComponent(chave)}`);
+  res.redirect(303, `/admin?chave=${encodeURIComponent(chave)}`);
 });

@@ -11,11 +11,13 @@ WhatsApp do profissional. Sem bot, sem Evolution API, sem depender da Meta.
 demanda por WhatsApp, classificava via IA e disparava para fornecedores. O pivô foi
 motivado pela fragilidade dupla: o número Evolution API (não-oficial) podia ser banido
 sem aviso, e a verificação Meta Business estava travada em burocracia fora do controle
-do time. Os arquivos continuam no repo (`routes/webhook.ts`, `webhookPagamento.ts`,
-`cadastro.ts`, `landing.ts`, `inicio.ts`; `services/ai.ts`, `whatsapp.ts`, `mensagens.ts`,
-`asaas.ts`), apenas **não montados** — `/`, `/fornecedores` e `/cadastro` redirecionam
-para o diretório. Para reativar: remontar os routers em `src/index.ts` e devolver as
-variáveis de ambiente a `required(...)` em `src/config/env.ts`.
+do time. O diretório passou a viver **na raiz** (`/`, `/busca`, `/p/:slug`, `/cadastro`, `/editar`,
+`/admin`). Os arquivos do fluxo WhatsApp continuam no repo (`routes/webhook.ts`,
+`webhookPagamento.ts`, `cadastro.ts`, `landing.ts`, `inicio.ts`; `services/ai.ts`,
+`whatsapp.ts`, `mensagens.ts`, `asaas.ts`), apenas **não montados**; `/fornecedores`
+redireciona para `/cadastro`. Para reativar: remontar os routers em `src/index.ts` (num
+sub-path, para não colidir com o diretório) e devolver as variáveis de ambiente a
+`required(...)` em `src/config/env.ts`.
 
 ## Status atual (atualizado em 2026-09-02)
 
@@ -47,39 +49,37 @@ variáveis de ambiente a `required(...)` em `src/config/env.ts`.
 - Domínio sem `www` (`achaiquemfaz.com.br`) — CNAME na raiz é rejeitado pelo Registro.br em modo avançado; resolver isso no modo básico exigiria remover os registros TXT de verificação da Railway, então foi adiado. Por enquanto, use sempre `www.achaiquemfaz.com.br`.
 - Deduplicação de mensagens recebidas do WhatsApp (a Evolution API às vezes entrega a mesma mensagem mais de uma vez, gerando respostas repetidas) — identificado, correção ainda pendente.
 
-## Diretório (`/diretorio`)
+## Diretório — o produto (vive na raiz)
 
 Vitrine pública de profissionais no modelo marketplace (tipo GetNinjas/Triider), com
 foco inicial em **casa e condomínio** em João Pessoa. O cliente busca por serviço e
 bairro, abre o perfil e fala **direto** no WhatsApp do profissional (`wa.me`) — sem bot,
 sem Evolution API, sem aprovação da Meta.
 
-Roda no mesmo backend/deploy, montado em `/diretorio`, **sem tocar no fluxo do WhatsApp**.
-
 **Visual:** design system próprio — base branca SaaS, verde `#15654a` primário, coral só
 em detalhe; Bricolage Grotesque (títulos) + Work Sans (texto) + IBM Plex Mono (labels).
 Servido por `paginaSite` / `CSS_SITE` em `services/html.ts`, independente da identidade
 "ordem de serviço" do fluxo WhatsApp (`paginaTicket`). Tema único claro. Mobile-first.
 
-**Rotas:**
-- `GET /diretorio` — home: hero, busca "O que? / Onde?", cards de categoria, "como funciona".
-- `GET /diretorio/busca` — resultados: barra de busca serviço+bairro, filtros laterais
+**Rotas** (na raiz — a estrutura `/diretorio/*` antiga redireciona para cá com 301):
+- `GET /` — home: hero, busca "O que? / Onde?", cards de categoria, "como funciona".
+- `GET /busca` — resultados: barra de busca serviço+bairro, filtros laterais
   (Serviço / Bairro / Atende) — gaveta no celular —, ordenação, empty state com sugestões.
-- `GET /diretorio/p/:slug` — perfil público (Sobre, Serviços, Área de atendimento,
-  Como funciona) + caixa de contato fixa; no celular, CTA "Chamar no WhatsApp" fixo na base.
-- `GET|POST /diretorio/cadastro` — auto-cadastro do profissional em **5 etapas** (Dados ·
-  Serviços · Localização · Sobre · Confirmar), com barra de progresso; uma página, um POST,
-  degrada para formulário único sem JS. Serviço principal tem opção "Outro" (texto livre).
-  Bairro é lista fechada dos bairros de João Pessoa (`BAIRROS_JOAO_PESSOA` em `types`) +
-  opção "João Pessoa — cidade toda"; quem escolhe "cidade toda" aparece em qualquer busca
-  por bairro. Enquanto `DIRETORIO_EXIGE_ASSINATURA=false`, é gratuito e o perfil já entra
+- `GET /p/:slug` — perfil público (Sobre, Serviços, Área de atendimento, Como funciona)
+  + caixa de contato fixa; no celular, CTA "Chamar no WhatsApp" fixo na base.
+- `GET|POST /cadastro` — auto-cadastro do profissional em **5 etapas** (Dados · Serviços ·
+  Localização · Sobre · Confirmar), com barra de progresso; uma página, um POST, degrada
+  para formulário único sem JS. Serviço principal tem opção "Outro" (texto livre). Bairro
+  é lista fechada dos bairros de João Pessoa (`BAIRROS_JOAO_PESSOA` em `types`) + opção
+  "João Pessoa — cidade toda"; quem escolhe "cidade toda" aparece em qualquer busca por
+  bairro. Enquanto `DIRETORIO_EXIGE_ASSINATURA=false`, é gratuito e o perfil já entra
   publicado; a tela de sucesso mostra o **magic link** de edição para o profissional guardar.
-- `GET|POST /diretorio/editar?token=…` — o profissional edita o próprio perfil e liga/
-  desliga a publicação. Sem senha, só o `edit_token`.
-- `GET /diretorio/admin?chave=…` — painel gated por `ADMIN_CHAVE`. Lista todos os perfis
-  com o magic link e uma mensagem de convite pronta para enviar aos ~150 já cadastrados
-  (opt-in de publicação — LGPD, já que eles foram importados, não se cadastraram). Toggle
-  publicar/ocultar por linha.
+- `GET|POST /editar?token=…` — o profissional edita o próprio perfil e liga/desliga a
+  publicação. Sem senha, só o `edit_token`.
+- `GET /admin?chave=…` — painel gated por `ADMIN_CHAVE`. Lista todos os perfis com o magic
+  link e uma mensagem de convite pronta para enviar aos ~150 já cadastrados (opt-in de
+  publicação — LGPD, já que eles foram importados, não se cadastraram). Toggle publicar/
+  ocultar por linha.
 
 **Banco:** a tabela `fornecedores` ganhou colunas nullable (`publicado`, `slug`,
 `descricao`, `servicos text[]`, `segmentos text[]`, `edit_token uuid`). Visibilidade no
@@ -137,10 +137,10 @@ src/
     inicio.ts               # [WhatsApp] página inicial (/) — escolha entre demandante e fornecedor
     landing.ts              # [WhatsApp] landing para fornecedores (/fornecedores)
     cadastro.ts             # [WhatsApp] formulário de cadastro de fornecedor + checkout
-    diretorio.ts            # [diretório] home (/diretorio), busca (/diretorio/busca), perfil (/p/:slug)
-    diretorioCadastro.ts    # [diretório] auto-cadastro em 5 etapas
-    diretorioEditar.ts      # [diretório] edição de perfil via magic link
-    diretorioAdmin.ts       # [diretório] painel gated por ADMIN_CHAVE
+    diretorio.ts            # [diretório] home (/), busca (/busca), perfil (/p/:slug)
+    diretorioCadastro.ts    # [diretório] auto-cadastro em 5 etapas (/cadastro)
+    diretorioEditar.ts      # [diretório] edição de perfil via magic link (/editar)
+    diretorioAdmin.ts       # [diretório] painel gated por ADMIN_CHAVE (/admin)
   types/index.ts            # tipos, categorias (base + casa/condomínio), lista de bairros de João Pessoa
 db/
   schema.sql               # schema completo das tabelas

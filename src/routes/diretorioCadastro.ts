@@ -37,7 +37,7 @@ function paginaFormulario(erro?: string, valores: Record<string, string> = {}): 
       <p class="lead">Apareça para quem procura profissionais para casa e condomínio em João Pessoa. O cliente fala com você direto no WhatsApp.${gratis}</p>
       ${erro ? `<p class="form-erro">${escaparHtml(erro)}</p>` : ""}
 
-      <form id="wiz" class="wiz" method="POST" action="/diretorio/cadastro">
+      <form id="wiz" class="wiz" method="POST" action="/cadastro">
         <div class="wiz-head" hidden>
           <div class="wiz-bar"><span></span><span></span><span></span><span></span><span></span></div>
           <div class="wiz-stepnum"></div>
@@ -189,7 +189,7 @@ function paginaSucesso(nome: string, slug: string, publicado: boolean, linkEdica
       <h1>Pronto, ${escaparHtml(nome)}!</h1>
       <p class="lead">${
         publicado
-          ? `Seu perfil já está no ar. <a href="/diretorio/p/${escaparHtml(slug)}">Ver como ficou</a>.`
+          ? `Seu perfil já está no ar. <a href="/p/${escaparHtml(slug)}">Ver como ficou</a>.`
           : "Recebemos seu cadastro. Ele entra no ar assim que for revisado."
       }</p>
       <div class="form-ok">Guarde este link — ele é só seu. É por ele que você edita ou tira seu perfil do ar depois.</div>
@@ -250,7 +250,7 @@ diretorioCadastroRouter.post("/", async (req, res) => {
       publicado: !env.diretorioExigeAssinatura,
     });
 
-    const linkEdicao = `${env.backendPublicUrl}/diretorio/editar?token=${editToken}`;
+    const linkEdicao = `${env.backendPublicUrl}/editar?token=${editToken}`;
     return res.send(paginaSucesso(nome, slug, !env.diretorioExigeAssinatura, linkEdicao));
   } catch (error) {
     console.error("Erro ao cadastrar perfil no diretório:", error);

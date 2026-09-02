@@ -390,18 +390,18 @@ export function paginaSite(opts: {
 
   const corpo = `<div class="site">
   <header class="hd">
-    <a class="hd-logo" href="/diretorio"><span class="mark" aria-hidden="true">A</span> Achaí Quem Faz</a>
+    <a class="hd-logo" href="/"><span class="mark" aria-hidden="true">A</span> Achaí Quem Faz</a>
     <nav class="hd-nav">
-      <a href="/diretorio/busca">Buscar</a>
-      <a href="/diretorio#como-funciona">Como funciona</a>
-      <a class="btn btn-primary btn-sm" href="/diretorio/cadastro">Sou fornecedor</a>
+      <a href="/busca">Buscar</a>
+      <a href="/#como-funciona">Como funciona</a>
+      <a class="btn btn-primary btn-sm" href="/cadastro">Sou fornecedor</a>
     </nav>
     <details class="hd-menu">
       <summary aria-label="Abrir menu">${menuBurger}</summary>
       <div class="hd-pop">
-        <a href="/diretorio/busca">Buscar</a>
-        <a href="/diretorio#como-funciona">Como funciona</a>
-        <a href="/diretorio/cadastro">Sou fornecedor</a>
+        <a href="/busca">Buscar</a>
+        <a href="/#como-funciona">Como funciona</a>
+        <a href="/cadastro">Sou fornecedor</a>
       </div>
     </details>
   </header>
@@ -410,7 +410,7 @@ export function paginaSite(opts: {
   </main>
   <footer class="ft">
     <span>Achaí Quem Faz · João Pessoa · PB</span>
-    <span><a href="/diretorio/cadastro">Sou fornecedor</a> · <a href="/diretorio#como-funciona">Como funciona</a> · <a href="https://instagram.com/achaiquemfaz" target="_blank" rel="noopener">@achaiquemfaz</a></span>
+    <span><a href="/cadastro">Sou fornecedor</a> · <a href="/#como-funciona">Como funciona</a> · <a href="https://instagram.com/achaiquemfaz" target="_blank" rel="noopener">@achaiquemfaz</a></span>
   </footer>
 </div>`;
 

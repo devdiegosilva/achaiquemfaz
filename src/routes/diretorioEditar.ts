@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { paginaSite, escaparHtml } from "../services/html";
 import { buscarPerfilPorToken, atualizarPerfilPorToken } from "../services/supabase";
+import { normalizarCategoria } from "../services/categorias";
 import {
   CSS_FORM_DIRETORIO,
   campoCategoria,
@@ -102,7 +103,7 @@ diretorioEditarRouter.post("/", async (req, res) => {
     if (!outra) {
       return res.status(400).send(paginaFormulario(perfil, token, { erro: "Diga qual serviço você presta." }));
     }
-    categoriaFinal = outra.toLowerCase();
+    categoriaFinal = normalizarCategoria(outra);
   }
   if (!categoriaFinal) {
     return res.status(400).send(paginaFormulario(perfil, token, { erro: "Escolha o serviço principal." }));

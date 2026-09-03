@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { paginaSite, escaparHtml } from "../services/html";
 import { criarPerfilDiretorio } from "../services/supabase";
+import { normalizarCategoria } from "../services/categorias";
 import { env } from "../config/env";
 import {
   CSS_FORM_DIRETORIO,
@@ -21,7 +22,9 @@ function resolverCategoria(body: Record<string, unknown>): { categoria: string; 
   if (escolhida !== "outro") return { categoria: escolhida };
   const outra = typeof body.categoriaOutra === "string" ? body.categoriaOutra.trim() : "";
   if (!outra) return { categoria: "", erro: "Diga qual serviço você presta." };
-  return { categoria: outra.toLowerCase() };
+  // Se o texto digitado corresponde a uma categoria que já existe (ex.: "frete" -> "frete e mudança"),
+  // usa a chave canônica pra o perfil ficar lincado aos cards da home e ao filtro da busca.
+  return { categoria: normalizarCategoria(outra) };
 }
 
 function paginaFormulario(erro?: string, valores: Record<string, string> = {}): string {

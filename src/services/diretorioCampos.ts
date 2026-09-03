@@ -75,12 +75,14 @@ export function campoCategoria(atual: string): string {
       <select id="categoria" name="categoria" required>
         <option value="">Selecione…</option>
         ${opts}
-        <option value="outro"${selecionado === "outro" ? " selected" : ""}>Outro — cadastrar novo serviço</option>
+        <option value="outro"${selecionado === "outro" ? " selected" : ""}>Não encontrei minha categoria</option>
       </select>
+      <p class="hint">Escolha uma da lista sempre que der — assim seu perfil aparece nos atalhos da página inicial e no filtro da busca.</p>
     </div>
     <div class="fld" id="fld-cat-outro"${selecionado === "outro" ? "" : " hidden"}>
       <label for="categoriaOutra">Qual serviço você presta?</label>
       <input type="text" id="categoriaOutra" name="categoriaOutra" value="${escaparHtml(textoOutro)}" placeholder="Ex: instalador de películas" />
+      <p class="hint">Digite o nome do serviço. Se já existir algo parecido na nossa lista, a gente liga automaticamente.</p>
     </div>
   `;
 }

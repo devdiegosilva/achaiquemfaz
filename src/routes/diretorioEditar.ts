@@ -46,7 +46,7 @@ function paginaFormulario(perfil: PerfilDiretorio, token: string, opts: { erro?:
         <div class="fld">
           <label>Nome</label>
           <input type="text" value="${escaparHtml(perfil.nome)}" disabled />
-          <p class="hint">Para mudar o nome, <a href="https://wa.me/message/POX4ZOXGP4NLD1" target="_blank" rel="noopener">fale com a gente pelo WhatsApp</a>.</p>
+          <p class="hint">Para mudar o nome, fale com a gente pelo WhatsApp.</p>
         </div>
         ${campoCategoria(perfil.categoria)}
         <div class="fld">

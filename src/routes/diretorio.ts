@@ -3,7 +3,6 @@ import { paginaSite, escaparHtml } from "../services/html";
 import {
   buscarPerfisPublicados,
   buscarCategoriasPublicadas,
-  buscarBairrosPublicados,
   buscarPerfilPorSlug,
 } from "../services/supabase";
 import { CATEGORIAS_BASE, CATEGORIAS_CASA_CONDOMINIO, SEGMENTOS, type PerfilDiretorio } from "../types";
@@ -98,18 +97,30 @@ function iconeCategoria(cat: string): string {
   return ICONES_CATEGORIA[cat] ?? "🔧";
 }
 
+// Datalist com os serviços já cadastrados, pra sugerir enquanto o usuário digita sem
+// travar em nenhuma opção — ele pode sempre digitar livremente algo que não está na lista.
+function montarDatalistServicos(categorias: string[]): string {
+  const rotulos = Array.from(new Set(categorias.map(rotuloCategoria))).sort((a, b) => a.localeCompare(b, "pt-BR"));
+  if (!rotulos.length) return "";
+  const opts = rotulos.map((r) => `<option value="${escaparHtml(r)}"></option>`).join("");
+  return `<datalist id="lista-servicos">${opts}</datalist>`;
+}
+
 const PASSOS = `
   <div class="steps3">
-    <div class="stp"><span class="n">Passo 1</span><h3>Diga o que você precisa</h3><p>Informe o serviço e o seu bairro em João Pessoa.</p></div>
-    <div class="stp"><span class="n">Passo 2</span><h3>Veja os profissionais</h3><p>Mostramos quem atende esse serviço na sua região.</p></div>
-    <div class="stp"><span class="n">Passo 3</span><h3>Entre em contato</h3><p>Fale direto no WhatsApp do profissional, sem intermediário.</p></div>
+    <div class="stp"><span class="n">Passo 1</span><h3>Diga o que você precisa</h3><p>Informe o serviço que você procura.</p></div>
+    <div class="stp"><span class="n">Passo 2</span><h3>Veja os profissionais</h3><p>Mostramos quem atende esse serviço em João Pessoa.</p></div>
+    <div class="stp"><span class="n">Passo 3</span><h3>Entre em contato</h3><p>Fale direto no WhatsApp do profissional e combine tudo, inclusive o local, com ele.</p></div>
   </div>
 `;
 
 // =====================================================================
 // HOME  (GET /diretorio)
 // =====================================================================
-diretorioRouter.get("/", (_req, res) => {
+diretorioRouter.get("/", async (_req, res) => {
+  const categoriasPublicadas = await buscarCategoriasPublicadas().catch(() => [] as string[]);
+  const datalistServicos = montarDatalistServicos(categoriasPublicadas);
+
   const catCards = HOME_CATS.map(
     (c) =>
       `<a class="cat" href="/busca?categoria=${encodeURIComponent(c)}"><span class="ic" aria-hidden="true">${iconeCategoria(c)}</span><span class="nm">${escaparHtml(rotuloCategoria(c))}</span></a>`
@@ -122,14 +133,11 @@ diretorioRouter.get("/", (_req, res) => {
       <form class="searchpanel" method="GET" action="/busca" role="search">
         <label class="sp-field">
           ${ICONE_LUPA}
-          <span class="col"><span class="lbl">O que você precisa?</span><input type="text" name="q" placeholder="Eletricista, encanador, pintor…" /></span>
-        </label>
-        <label class="sp-field">
-          ${ICONE_PIN}
-          <span class="col"><span class="lbl">Onde?</span><input type="text" name="bairro" placeholder="Seu bairro em João Pessoa…" /></span>
+          <span class="col"><span class="lbl">O que você precisa?</span><input type="text" name="q" list="lista-servicos" placeholder="Eletricista, encanador, pintor…" /></span>
         </label>
         <button type="submit" class="btn btn-primary btn-lg">Encontrar</button>
       </form>
+      ${datalistServicos}
     </section>
 
     <section class="home-sec">
@@ -158,7 +166,7 @@ diretorioRouter.get("/", (_req, res) => {
 // =====================================================================
 // RESULTADOS  (GET /busca)
 // =====================================================================
-type FiltrosUrl = { q?: string; categoria?: string; bairro?: string; segmento?: string; ordem?: string };
+type FiltrosUrl = { q?: string; categoria?: string; segmento?: string; ordem?: string };
 
 function montarBusca(atuais: FiltrosUrl, mudancas: FiltrosUrl = {}): string {
   const merge: FiltrosUrl = { ...atuais, ...mudancas };
@@ -173,33 +181,29 @@ function montarBusca(atuais: FiltrosUrl, mudancas: FiltrosUrl = {}): string {
 diretorioRouter.get("/busca", async (req, res) => {
   const q = str(req.query.q);
   const categoria = str(req.query.categoria);
-  const bairro = str(req.query.bairro);
   const segmento = str(req.query.segmento);
   const ordem = str(req.query.ordem) === "recentes" ? "recentes" : "";
-  const atuais: FiltrosUrl = { q, categoria, bairro, segmento, ordem };
+  const atuais: FiltrosUrl = { q, categoria, segmento, ordem };
 
-  const [perfis, categoriasPublicadas, bairrosPublicados] = await Promise.all([
+  const [perfis, categoriasPublicadas] = await Promise.all([
     buscarPerfisPublicados({
       termo: q || undefined,
       categoria: categoria || undefined,
-      bairro: bairro || undefined,
       segmento: segmento || undefined,
       ordem: ordem === "recentes" ? "recentes" : "nome",
     }).catch(() => [] as PerfilDiretorio[]),
     buscarCategoriasPublicadas().catch(() => [] as string[]),
-    buscarBairrosPublicados().catch(() => [] as string[]),
   ]);
 
   const categoriasOrdenadas = Array.from(new Set(categoriasPublicadas)).sort((a, b) =>
     rotuloCategoria(a).localeCompare(rotuloCategoria(b), "pt-BR")
   );
-  const bairrosOrdenados = Array.from(new Set(bairrosPublicados)).sort((a, b) => a.localeCompare(b, "pt-BR"));
 
   function grupo(
     titulo: string,
     itens: Array<{ valor: string; rotulo: string }>,
     ativoAtual: string,
-    chave: "categoria" | "bairro" | "segmento"
+    chave: "categoria" | "segmento"
   ): string {
     if (itens.length === 0) return "";
     const linhas = itens
@@ -219,7 +223,6 @@ diretorioRouter.get("/busca", async (req, res) => {
         <summary>Filtros</summary>
         <div class="fbody">
           ${grupo("Serviço", categoriasOrdenadas.map((c) => ({ valor: c, rotulo: rotuloCategoria(c) })), categoria, "categoria")}
-          ${grupo("Bairro", bairrosOrdenados.map((b) => ({ valor: b, rotulo: b })), bairro, "bairro")}
           ${grupo("Atende", Object.keys(SEGMENTOS).map((s) => ({ valor: s, rotulo: rotuloSegmento(s) })), segmento, "segmento")}
         </div>
       </details>
@@ -230,7 +233,6 @@ diretorioRouter.get("/busca", async (req, res) => {
   const tituloResultado =
     `${n} ${n === 1 ? "profissional" : "profissionais"}` +
     (categoria ? ` de ${rotuloCategoria(categoria)}` : "") +
-    (bairro ? ` em ${escaparHtml(bairro)}` : "") +
     (q && !categoria ? ` para “${escaparHtml(q)}”` : "");
 
   const ordAZ = !ordem;
@@ -261,7 +263,7 @@ diretorioRouter.get("/busca", async (req, res) => {
     })
     .join("");
 
-  const temFiltro = Boolean(q || categoria || bairro || segmento);
+  const temFiltro = Boolean(q || categoria || segmento);
   const listagem = perfis.length
     ? `<div class="plist">${cards}</div>`
     : `<div class="empty">
@@ -271,7 +273,6 @@ diretorioRouter.get("/busca", async (req, res) => {
           temFiltro
             ? `<ul>
                 <li><a href="/busca">Ver todos</a></li>
-                ${bairro ? `<li><a href="${escaparHtml(montarBusca(atuais, { bairro: "" }))}">Buscar em toda João Pessoa</a></li>` : ""}
                 ${categoria ? `<li><a href="${escaparHtml(montarBusca(atuais, { categoria: "" }))}">Tirar o filtro de serviço</a></li>` : ""}
               </ul>`
             : ""
@@ -281,13 +282,13 @@ diretorioRouter.get("/busca", async (req, res) => {
   const secoes = `
     <div class="rbar">
       <form class="mini" method="GET" action="/busca" role="search">
-        <input type="text" name="q" value="${escaparHtml(q)}" placeholder="Serviço" aria-label="Serviço" />
-        <input type="text" name="bairro" value="${escaparHtml(bairro)}" placeholder="Bairro" aria-label="Bairro" />
+        <input type="text" name="q" value="${escaparHtml(q)}" list="lista-servicos" placeholder="Serviço" aria-label="Serviço" />
         ${categoria ? `<input type="hidden" name="categoria" value="${escaparHtml(categoria)}" />` : ""}
         ${segmento ? `<input type="hidden" name="segmento" value="${escaparHtml(segmento)}" />` : ""}
         <button type="submit">Buscar</button>
       </form>
     </div>
+    ${montarDatalistServicos(categoriasPublicadas)}
     <div class="rhead">
       <h1>${tituloResultado}</h1>
       <span class="srt">${srt}</span>
@@ -304,11 +305,11 @@ diretorioRouter.get("/busca", async (req, res) => {
       secoes,
       largura: "ampla",
       metaDescricao:
-        "Profissionais para casa e condomínio em João Pessoa. Filtre por serviço e bairro e fale direto no WhatsApp.",
+        "Profissionais para casa e condomínio em João Pessoa. Fale direto no WhatsApp com quem faz o serviço que você precisa.",
       evento: {
         tipo: "busca",
         servico: categoria || q || null,
-        bairro: bairro || null,
+        bairro: null,
         resultados_count: perfis.length,
       },
     })

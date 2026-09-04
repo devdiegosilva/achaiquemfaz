@@ -4,8 +4,9 @@ Conecta quem precisa de um serviço para casa ou condomínio a profissionais e e
 da região, em João Pessoa/PB.
 
 **O produto é o Diretório (`/diretorio`)** — vitrine pública de profissionais no modelo
-marketplace; o cliente busca por serviço e bairro, abre o perfil e fala direto no
-WhatsApp do profissional. Sem bot, sem Evolution API, sem depender da Meta.
+marketplace; o cliente busca por serviço, abre o perfil e fala direto no WhatsApp do
+profissional — localização é combinada entre os dois por lá, fora do site. Sem bot, sem
+Evolution API, sem depender da Meta.
 
 **O fluxo WhatsApp original foi desativado em 2026-09-02.** Era um agente que recebia a
 demanda por WhatsApp, classificava via IA e disparava para fornecedores. O pivô foi
@@ -52,9 +53,11 @@ sub-path, para não colidir com o diretório) e devolver as variáveis de ambien
 ## Diretório — o produto (vive na raiz)
 
 Vitrine pública de profissionais no modelo marketplace (tipo GetNinjas/Triider), com
-foco inicial em **casa e condomínio** em João Pessoa. O cliente busca por serviço e
-bairro, abre o perfil e fala **direto** no WhatsApp do profissional (`wa.me`) — sem bot,
-sem Evolution API, sem aprovação da Meta.
+foco inicial em **casa e condomínio** em João Pessoa. O cliente busca por serviço, abre
+o perfil e fala **direto** no WhatsApp do profissional (`wa.me`) — sem bot, sem Evolution
+API, sem aprovação da Meta. A busca não filtra por bairro: localização é combinada entre
+cliente e profissional no próprio WhatsApp, fora do site (bairro do profissional ainda
+aparece no card/perfil, só como informação).
 
 **Visual:** design system próprio — base branca SaaS, verde `#15654a` primário, coral só
 em detalhe; Bricolage Grotesque (títulos) + Work Sans (texto) + IBM Plex Mono (labels).
@@ -62,9 +65,11 @@ Servido por `paginaSite` / `CSS_SITE` em `services/html.ts`, independente da ide
 "ordem de serviço" do fluxo WhatsApp (`paginaTicket`). Tema único claro. Mobile-first.
 
 **Rotas** (na raiz — a estrutura `/diretorio/*` antiga redireciona para cá com 301):
-- `GET /` — home: hero, busca "O que? / Onde?", cards de categoria, "como funciona".
-- `GET /busca` — resultados: barra de busca serviço+bairro, filtros laterais
-  (Serviço / Bairro / Atende) — gaveta no celular —, ordenação, empty state com sugestões.
+- `GET /` — home: hero, busca "O que você precisa?" (com autocomplete via `<datalist>`
+  dos serviços já cadastrados — digitação continua livre, não trava em categoria
+  existente), cards de categoria, "como funciona".
+- `GET /busca` — resultados: barra de busca por serviço (mesmo autocomplete), filtros
+  laterais (Serviço / Atende) — gaveta no celular —, ordenação, empty state com sugestões.
 - `GET /p/:slug` — perfil público (Sobre, Serviços, Área de atendimento, Como funciona)
   + caixa de contato fixa; no celular, CTA "Chamar no WhatsApp" fixo na base.
 - `GET|POST /cadastro` — auto-cadastro do profissional em **5 etapas** (Dados · Serviços ·
@@ -96,7 +101,8 @@ construído.
 
 **Analytics próprio (sem GA4/Mixpanel para o funil):** tabela `eventos` no Supabase,
 alimentada 100% pelo client (`/aqf.js`, injetado por `paginaSite`) via `POST /api/eventos`.
-- Eventos: `busca` (com `servico`, `bairro`, `resultados_count` — **inclusive 0**),
+- Eventos: `busca` (com `servico`, `resultados_count` — **inclusive 0**; `bairro` fica
+  sempre `null` desde que a busca deixou de filtrar por localização),
   `perfil_visto` (`profissional_slug`), `whatsapp_clicado` (`profissional_slug` + `contexto`
   = `card_busca` | `perfil`, enviado por `navigator.sendBeacon` antes da navegação).
 - `session_id` (uuid em `localStorage.aqf_sid`) + atribuição first-touch em
@@ -106,7 +112,7 @@ alimentada 100% pelo client (`/aqf.js`, injetado por `paginaSite`) via `POST /ap
   user-agent de bot, sempre responde `204`, insert fire-and-forget. `app.set("trust proxy", 1)`
   no `index.ts` pro `req.ip` real atrás do proxy.
 - `GET /admin/metricas?chave=…&periodo=7d|30d` — mesma auth do `/admin`. Tabelas (sem
-  gráficos): **demanda não atendida** (buscas com 0 resultado, por serviço+bairro — no topo),
+  gráficos): **demanda não atendida** (buscas com 0 resultado, por serviço — no topo),
   totais, taxas (calculadas sobre **buscas únicas por sessão**, não eventos crus),
   demanda atendida, profissionais (ordenado por cliques asc), origem. Agregação em JS;
   se o volume crescer, mover para view SQL — a tabela `eventos` já dá o SQL cru.

@@ -413,6 +413,7 @@ export function paginaSite(opts: {
     <nav class="hd-nav">
       <a href="/busca">Buscar</a>
       <a href="/#como-funciona">Como funciona</a>
+      <a href="/suporte">Suporte</a>
       <a class="btn btn-primary btn-sm" href="/cadastro">Sou fornecedor</a>
     </nav>
     <details class="hd-menu">
@@ -420,6 +421,7 @@ export function paginaSite(opts: {
       <div class="hd-pop">
         <a href="/busca">Buscar</a>
         <a href="/#como-funciona">Como funciona</a>
+        <a href="/suporte">Suporte</a>
         <a href="/cadastro">Sou fornecedor</a>
       </div>
     </details>
@@ -429,7 +431,7 @@ export function paginaSite(opts: {
   </main>
   <footer class="ft">
     <span>Achaí Quem Faz · João Pessoa · PB</span>
-    <span><a href="/cadastro">Sou fornecedor</a> · <a href="/#como-funciona">Como funciona</a> · <a href="https://instagram.com/achaiquemfaz" target="_blank" rel="noopener">@achaiquemfaz</a></span>
+    <span><a href="/cadastro">Sou fornecedor</a> · <a href="/#como-funciona">Como funciona</a> · <a href="/suporte">Suporte</a> · <a href="https://instagram.com/achaiquemfaz" target="_blank" rel="noopener">@achaiquemfaz</a></span>
   </footer>
 </div>
 ${eventoJson ? `<script>window.__aqfEvento=${eventoJson};</script>` : ""}

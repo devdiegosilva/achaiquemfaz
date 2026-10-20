@@ -4,6 +4,7 @@ import { diretorioRouter } from "./routes/diretorio";
 import { diretorioCadastroRouter } from "./routes/diretorioCadastro";
 import { diretorioEditarRouter } from "./routes/diretorioEditar";
 import { diretorioAdminRouter } from "./routes/diretorioAdmin";
+import { suporteRouter } from "./routes/suporte";
 import { eventosRouter } from "./routes/eventos";
 import { TRACK_JS } from "./services/trackScript";
 
@@ -28,6 +29,7 @@ app.use("/api", eventosRouter);
 app.use("/cadastro", diretorioCadastroRouter);
 app.use("/editar", diretorioEditarRouter);
 app.use("/admin", diretorioAdminRouter);
+app.use("/suporte", suporteRouter);
 
 // Compat: a estrutura antiga era /diretorio/*. Redireciona para a raiz (301).
 // req.url aqui já vem sem o prefixo "/diretorio" (Express).
